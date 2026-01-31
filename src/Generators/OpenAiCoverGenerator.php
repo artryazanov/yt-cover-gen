@@ -5,7 +5,7 @@ namespace Artryazanov\YtCoverGen\Generators;
 use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\Enums\OpenAiModelEnum;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
-use OpenAI\Client;
+use OpenAI\Contracts\ClientContract;
 use RuntimeException;
 
 class OpenAiCoverGenerator implements CoverGeneratorInterface
@@ -13,14 +13,14 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
     private const DEFAULT_IMAGE_SIZE = '1536x1024';
     private const DEFAULT_MODEL = OpenAiModelEnum::GPT_IMAGE_1->value;
 
-    private Client $client;
+    private ClientContract $client;
     private ImageProcessor $imageProcessor;
     private string $outputPath;
     private string $model;
     private string $size;
 
     public function __construct(
-        Client $client, 
+        ClientContract $client, 
         ImageProcessor $imageProcessor, 
         string $outputPath = '/tmp',
         ?string $model = null,

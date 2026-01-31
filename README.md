@@ -1,5 +1,10 @@
 # YouTube AI Cover Generator
 
+[![Tests](https://github.com/artryazanov/yt-cover-gen/actions/workflows/run-tests.yml/badge.svg)](https://github.com/artryazanov/yt-cover-gen/actions/workflows/run-tests.yml)
+[![Latest Stable Version](https://poser.pugx.org/artryazanov/yt-cover-gen/v)](https://packagist.org/packages/artryazanov/yt-cover-gen)
+[![Total Downloads](https://poser.pugx.org/artryazanov/yt-cover-gen/downloads)](https://packagist.org/packages/artryazanov/yt-cover-gen)
+[![License](https://poser.pugx.org/artryazanov/yt-cover-gen/license)](https://packagist.org/packages/artryazanov/yt-cover-gen)
+
 ## Introduction
 
 **YouTube AI Cover Generator** (`artryazanov/yt-cover-gen`) is a framework-agnostic PHP package designed to automatically generate viral, high-CTR (Click-Through Rate) YouTube thumbnails from gameplay screenshots using generic AI models.
@@ -160,6 +165,14 @@ The package includes an Enum `Artryazanov\YtCoverGen\Enums\OpenAiModelEnum` for 
 The package includes an Enum `Artryazanov\YtCoverGen\Enums\GeminiModelEnum`:
 - `gemini-3-pro-image-preview` (Default)
 - `gemini-2.5-flash-image`
+
+## Testing
+
+Run the tests with:
+
+```bash
+composer test
+```
 
 ## License
 
