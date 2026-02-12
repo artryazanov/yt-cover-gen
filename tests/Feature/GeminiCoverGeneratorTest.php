@@ -4,42 +4,44 @@ use Artryazanov\YtCoverGen\Generators\GeminiCoverGenerator;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 
 beforeEach(function () {
     $this->httpClient = Mockery::mock(ClientInterface::class);
     $this->requestFactory = Mockery::mock(RequestFactoryInterface::class);
     $this->streamFactory = Mockery::mock(StreamFactoryInterface::class);
-    $this->imageProcessor = new ImageProcessor();
-    
-    $this->tempDir = sys_get_temp_dir() . '/yt_cover_gen_tests_gemini_' . uniqid();
+    $this->imageProcessor = new ImageProcessor;
+
+    $this->tempDir = sys_get_temp_dir().'/yt_cover_gen_tests_gemini_'.uniqid();
     mkdir($this->tempDir);
-    
-    $this->dummyImage = $this->tempDir . '/input.jpg';
+
+    $this->dummyImage = $this->tempDir.'/input.jpg';
     $img = imagecreatetruecolor(50, 50);
     imagejpeg($img, $this->dummyImage);
     imagedestroy($img);
 });
 
 afterEach(function () {
-    $files = glob($this->tempDir . '/*');
+    $files = glob($this->tempDir.'/*');
     foreach ($files as $file) {
-        if (is_file($file)) unlink($file);
+        if (is_file($file)) {
+            unlink($file);
+        }
     }
     rmdir($this->tempDir);
 });
 
 it('throws exception if image missing', function () {
     $generator = new GeminiCoverGenerator(
-        $this->imageProcessor, 
-        $this->tempDir, 
-        null, 
-        $this->httpClient, 
-        $this->requestFactory, 
-        $this->streamFactory, 
+        $this->imageProcessor,
+        $this->tempDir,
+        null,
+        $this->httpClient,
+        $this->requestFactory,
+        $this->streamFactory,
         'key'
     );
     $generator->generate('missing.jpg', 'G', 'D');
@@ -47,12 +49,12 @@ it('throws exception if image missing', function () {
 
 it('generates cover using Gemini Beta API', function () {
     $generator = new GeminiCoverGenerator(
-        $this->imageProcessor, 
-        $this->tempDir, 
-        'gemini-3-pro-image-preview', 
-        $this->httpClient, 
-        $this->requestFactory, 
-        $this->streamFactory, 
+        $this->imageProcessor,
+        $this->tempDir,
+        'gemini-3-pro-image-preview',
+        $this->httpClient,
+        $this->requestFactory,
+        $this->streamFactory,
         'test-api-key'
     );
 
@@ -84,13 +86,13 @@ it('generates cover using Gemini Beta API', function () {
                         [
                             'inlineData' => [
                                 'mime_type' => 'image/jpeg',
-                                'data' => $b64
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
+                                'data' => $b64,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
     ]);
 
     $responseBody = Mockery::mock(StreamInterface::class);

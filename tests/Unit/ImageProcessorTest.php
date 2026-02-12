@@ -3,16 +3,18 @@
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 
 beforeEach(function () {
-    $this->processor = new ImageProcessor();
-    $this->tempDir = sys_get_temp_dir() . '/yt_cover_gen_tests_' . uniqid();
+    $this->processor = new ImageProcessor;
+    $this->tempDir = sys_get_temp_dir().'/yt_cover_gen_tests_'.uniqid();
     mkdir($this->tempDir);
 });
 
 afterEach(function () {
     // Cleanup temp files
-    $files = glob($this->tempDir . '/*');
+    $files = glob($this->tempDir.'/*');
     foreach ($files as $file) {
-        if (is_file($file)) unlink($file);
+        if (is_file($file)) {
+            unlink($file);
+        }
     }
     rmdir($this->tempDir);
 });
@@ -28,7 +30,7 @@ it('can process and save an image', function () {
 
     $path = $this->processor->processAndSave($data, $this->tempDir, 'test.jpg');
 
-    expect($path)->toBe($this->tempDir . '/test.jpg');
+    expect($path)->toBe($this->tempDir.'/test.jpg');
     expect(file_exists($path))->toBeTrue();
 
     // Verify 16:9 aspect ratio check (logic says newHeight = width * 9 / 16)
@@ -39,7 +41,7 @@ it('can process and save an image', function () {
 });
 
 it('can convert image to base64', function () {
-    $path = $this->tempDir . '/test_base64.txt';
+    $path = $this->tempDir.'/test_base64.txt';
     file_put_contents($path, 'hello world');
 
     $base64 = $this->processor->imageToBase64($path);
@@ -57,7 +59,7 @@ it('can get correct mime type', function () {
     ];
 
     foreach ($files as $file => $mime) {
-        $path = $this->tempDir . '/' . $file;
+        $path = $this->tempDir.'/'.$file;
         touch($path);
         expect($this->processor->getMimeType($path))->toBe($mime);
     }

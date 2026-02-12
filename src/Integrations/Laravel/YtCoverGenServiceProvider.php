@@ -14,14 +14,14 @@ class YtCoverGenServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../../../config/yt-cover-gen.php' => config_path('yt-cover-gen.php'),
+            __DIR__.'/../../../config/yt-cover-gen.php' => config_path('yt-cover-gen.php'),
         ], 'yt-cover-gen-config');
     }
 
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/../../../config/yt-cover-gen.php', 'yt-cover-gen'
+            __DIR__.'/../../../config/yt-cover-gen.php', 'yt-cover-gen'
         );
 
         $this->app->bind(CoverGeneratorInterface::class, function ($app) {
@@ -41,9 +41,9 @@ class YtCoverGenServiceProvider extends ServiceProvider
 
             // Helper to create Gemini Generator
             $createGemini = function () use ($app, $config, $outputPath) {
-                $httpClient = $app->bound(ClientInterface::class) ? $app->make(ClientInterface::class) : new \GuzzleHttp\Client();
-                $requestFactory = $app->bound(RequestFactoryInterface::class) ? $app->make(RequestFactoryInterface::class) : new \GuzzleHttp\Psr7\HttpFactory();
-                $streamFactory = $app->bound(StreamFactoryInterface::class) ? $app->make(StreamFactoryInterface::class) : new \GuzzleHttp\Psr7\HttpFactory();
+                $httpClient = $app->bound(ClientInterface::class) ? $app->make(ClientInterface::class) : new \GuzzleHttp\Client;
+                $requestFactory = $app->bound(RequestFactoryInterface::class) ? $app->make(RequestFactoryInterface::class) : new \GuzzleHttp\Psr7\HttpFactory;
+                $streamFactory = $app->bound(StreamFactoryInterface::class) ? $app->make(StreamFactoryInterface::class) : new \GuzzleHttp\Psr7\HttpFactory;
 
                 return CoverGeneratorFactory::createGemini(
                     $config['drivers']['gemini']['api_key'],
@@ -64,13 +64,14 @@ class YtCoverGenServiceProvider extends ServiceProvider
 
             if ($driver === 'openai') {
                 $primary = $createOpenAi();
-                
+
                 // Check if Fallback (Gemini) is possible
-                if (!empty($config['drivers']['gemini']['api_key'])) {
+                if (! empty($config['drivers']['gemini']['api_key'])) {
                     $secondary = $createGemini();
+
                     return new \Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator($primary, $secondary, $errorHandler);
                 }
-                
+
                 return $primary;
             }
 
@@ -78,8 +79,9 @@ class YtCoverGenServiceProvider extends ServiceProvider
                 $primary = $createGemini();
 
                 // Check if Fallback (OpenAI) is possible
-                if (!empty($config['drivers']['openai']['api_key'])) {
+                if (! empty($config['drivers']['openai']['api_key'])) {
                     $secondary = $createOpenAi();
+
                     return new \Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator($primary, $secondary, $errorHandler);
                 }
 

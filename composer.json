@@ -20,7 +20,9 @@
     },
     "require-dev": {
         "orchestra/testbench": "^9.0",
-        "pestphp/pest": "^2.0 || ^3.0"
+        "pestphp/pest": "^2.0 || ^3.0",
+        "larastan/larastan": "^3.9",
+        "laravel/pint": "^1.27"
     },
     "autoload": {
         "psr-4": {

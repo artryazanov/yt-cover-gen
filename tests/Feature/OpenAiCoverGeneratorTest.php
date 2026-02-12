@@ -7,22 +7,24 @@ use OpenAI\Responses\Images\EditResponse;
 beforeEach(function () {
     // Debug info
     $interface = \OpenAI\Contracts\ClientContract::class;
-    if (!interface_exists($interface)) {
+    if (! interface_exists($interface)) {
         echo "Interface $interface NOT FOUND. Attempting eager load...\n";
-        if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
-             require_once __DIR__ . '/../../vendor/autoload.php';
+        if (file_exists(__DIR__.'/../../vendor/autoload.php')) {
+            require_once __DIR__.'/../../vendor/autoload.php';
         }
     }
 
     $this->client = Mockery::mock(\OpenAI\Contracts\ClientContract::class);
     $this->images = Mockery::mock(\OpenAI\Contracts\Resources\ImagesContract::class);
     $this->client->allows()->images()->andReturn($this->images);
-    
-    $this->imageProcessor = new ImageProcessor();
-    $this->tempDir = sys_get_temp_dir() . '/yt_cover_gen_tests_openai_' . uniqid();
-    if (!is_dir($this->tempDir)) mkdir($this->tempDir);
-    
-    $this->dummyImage = $this->tempDir . '/input.jpg';
+
+    $this->imageProcessor = new ImageProcessor;
+    $this->tempDir = sys_get_temp_dir().'/yt_cover_gen_tests_openai_'.uniqid();
+    if (! is_dir($this->tempDir)) {
+        mkdir($this->tempDir);
+    }
+
+    $this->dummyImage = $this->tempDir.'/input.jpg';
     $img = imagecreatetruecolor(100, 100);
     imagejpeg($img, $this->dummyImage);
     imagedestroy($img);
@@ -30,9 +32,11 @@ beforeEach(function () {
 
 afterEach(function () {
     if (isset($this->tempDir) && is_dir($this->tempDir)) {
-        $files = glob($this->tempDir . '/*');
+        $files = glob($this->tempDir.'/*');
         foreach ($files as $file) {
-            if (is_file($file)) unlink($file);
+            if (is_file($file)) {
+                unlink($file);
+            }
         }
         rmdir($this->tempDir);
     }
@@ -57,17 +61,17 @@ it('generates cover using OpenAI', function () {
         'data' => [
             [
                 'b64_json' => $b64,
-            ]
-        ]
+            ],
+        ],
     ]);
 
     $this->images->shouldReceive('edit')
         ->once()
         ->with(Mockery::on(function ($args) {
-             return ($args['model'] === 'gpt-image-1' 
-                && is_resource($args['image'])
-                && str_contains($args['prompt'], "Create a viral YouTube thumbnail")
-                && $args['size'] === '1536x1024');
+            return $args['model'] === 'gpt-image-1'
+               && is_resource($args['image'])
+               && str_contains($args['prompt'], 'Create a viral YouTube thumbnail')
+               && $args['size'] === '1536x1024';
         }))
         ->andReturn($mockResponse);
 

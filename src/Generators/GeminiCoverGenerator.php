@@ -12,14 +12,18 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
 {
     private const DEFAULT_MODEL = GeminiModelEnum::GEMINI_3_PRO_IMAGE_PREVIEW->value;
 
-
     private $httpClient;
+
     private $requestFactory;
+
     private $streamFactory;
+
     private ?string $apiKey;
-    
+
     private ImageProcessor $imageProcessor;
+
     private string $outputPath;
+
     private string $model;
 
     public function __construct(
@@ -44,33 +48,34 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
     public function generate(string $imagePath, string $gameName, string $videoDescription): string
     {
         $prompt = $this->buildPrompt($gameName, $videoDescription);
-        
-        if (!file_exists($imagePath)) {
+
+        if (! file_exists($imagePath)) {
             throw new RuntimeException("Image file not found: $imagePath");
         }
 
-        if (!$this->httpClient || !$this->apiKey) {
-            throw new RuntimeException("PSR Client and API Key required for Gemini models.");
+        if (! $this->httpClient || ! $this->apiKey) {
+            throw new RuntimeException('PSR Client and API Key required for Gemini models.');
         }
+
         return $this->generateWithRawBetaApi($imagePath, $prompt);
     }
 
     private function generateWithRawBetaApi(string $imagePath, string $prompt): string
     {
         $imageBase64 = $this->imageProcessor->imageToBase64($imagePath);
-        
+
         // Strict match of ExtendedGeminiClient logic
         $mimeType = 'image/jpeg'; // Default
         $extension = strtolower(pathinfo($imagePath, PATHINFO_EXTENSION));
         if ($extension === 'png') {
             $mimeType = 'image/png';
         } elseif ($extension === 'gif') {
-             $mimeType = 'image/gif';
+            $mimeType = 'image/gif';
         } elseif ($extension === 'webp') {
-             $mimeType = 'image/webp';
+            $mimeType = 'image/webp';
         }
 
-         $payload = [
+        $payload = [
             'contents' => [
                 [
                     'parts' => [
@@ -113,31 +118,30 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
 
         $request = $this->requestFactory->createRequest('POST', $url)
             ->withHeader('Content-Type', 'application/json');
-            // ExtendedGeminiClient::editImage does NOT add x-goog-api-key header, it uses query param only.
-            
+        // ExtendedGeminiClient::editImage does NOT add x-goog-api-key header, it uses query param only.
+
         $body = $this->streamFactory->createStream(json_encode($payload));
         $request = $request->withBody($body);
 
         $response = $this->httpClient->sendRequest($request);
 
         if ($response->getStatusCode() !== 200) {
-            throw new GeminiResponseException("Gemini API Error: " . $response->getBody()->getContents());
+            throw new GeminiResponseException('Gemini API Error: '.$response->getBody()->getContents());
         }
-        
+
         $json = json_decode($response->getBody()->getContents(), true);
 
         // Extract image data manually
         foreach ($json['candidates'][0]['content']['parts'] ?? [] as $part) {
             if (isset($part['inlineData']['data'])) {
                 $imageData = base64_decode($part['inlineData']['data']);
-                return $this->imageProcessor->processAndSave($imageData, $this->outputPath, 'gemini_beta_' . time() . '.jpg');
+
+                return $this->imageProcessor->processAndSave($imageData, $this->outputPath, 'gemini_beta_'.time().'.jpg');
             }
         }
-        
-        throw new GeminiResponseException("No image found in Gemini Beta response. Response: " . json_encode($json));
+
+        throw new GeminiResponseException('No image found in Gemini Beta response. Response: '.json_encode($json));
     }
-
-
 
     private function buildPrompt(string $gameName, string $videoDescription): string
     {
@@ -154,6 +158,7 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         $prompt .= "    NEGATIVE CONSTRAINT: Do NOT duplicate the logo. Do NOT write the game name as plain text separate from the logo. Show the logo EXACTLY ONCE.\r\n";
         $prompt .= "    HEADLINE & LOGO should be maximum readability against the background.\r\n";
         $prompt .= "    Place HEADLINE & LOGO strategically so them doesn't cover the main focal point.\r\n";
+
         return $prompt;
     }
 }

@@ -1,8 +1,8 @@
 <?php
 
 use Artryazanov\YtCoverGen\CoverGeneratorFactory;
-use Artryazanov\YtCoverGen\Generators\OpenAiCoverGenerator;
 use Artryazanov\YtCoverGen\Generators\GeminiCoverGenerator;
+use Artryazanov\YtCoverGen\Generators\OpenAiCoverGenerator;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;

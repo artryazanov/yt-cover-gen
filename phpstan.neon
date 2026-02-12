@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - src/
+        - config/
+
+    # Level 9 is the highest level
+    level: 5
+
+    ignoreErrors:
+        - '#Called .env. outside of the config directory#'
+#        - '#PHPDoc tag @var#'
+#
+#    excludePaths:
+#        - ./*/*/FileToBeExcluded.php

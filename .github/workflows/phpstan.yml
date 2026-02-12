@@ -1,21 +1,16 @@
-name: Tests
+name: Static Analysis
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+on: [push, pull_request]
 
 jobs:
-  test:
+  phpstan:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
         php: [8.2, 8.3, 8.4]
-        dependency-version: [prefer-stable]
 
-    name: P${{ matrix.php }} - ${{ matrix.dependency-version }}
+    name: P${{ matrix.php }}
 
     steps:
       - name: Checkout code
@@ -29,7 +24,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
+        run: composer update --prefer-stable --prefer-dist --no-interaction
 
-      - name: Execute tests
-        run: composer test
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=2G

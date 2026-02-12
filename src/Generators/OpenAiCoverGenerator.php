@@ -11,17 +11,22 @@ use RuntimeException;
 class OpenAiCoverGenerator implements CoverGeneratorInterface
 {
     private const DEFAULT_IMAGE_SIZE = '1536x1024';
+
     private const DEFAULT_MODEL = OpenAiModelEnum::GPT_IMAGE_1->value;
 
     private ClientContract $client;
+
     private ImageProcessor $imageProcessor;
+
     private string $outputPath;
+
     private string $model;
+
     private string $size;
 
     public function __construct(
-        ClientContract $client, 
-        ImageProcessor $imageProcessor, 
+        ClientContract $client,
+        ImageProcessor $imageProcessor,
         string $outputPath = '/tmp',
         ?string $model = null,
         ?string $size = null
@@ -36,16 +41,16 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
     public function generate(string $imagePath, string $gameName, string $videoDescription): string
     {
         $prompt = $this->buildPrompt($gameName, $videoDescription);
-        
-        // Ensure image is locally available 
-        if (!file_exists($imagePath)) {
+
+        // Ensure image is locally available
+        if (! file_exists($imagePath)) {
             throw new RuntimeException("Image file not found: $imagePath");
         }
 
         // Use a temporary local file handle for the request
-        // The original implementation sends the file directly. 
+        // The original implementation sends the file directly.
         // We assume the environment supports the format provided (e.g. JPEG) as per OpenAiAssistant reference.
-        
+
         $response = $this->client->images()->edit([
             'model' => $this->model,
             'image' => fopen($imagePath, 'r'),
@@ -61,7 +66,7 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
         $b64 = $response->data[0]->b64_json;
         $imageData = base64_decode($b64);
 
-        return $this->imageProcessor->processAndSave($imageData, $this->outputPath, 'openai_' . time() . '.jpg');
+        return $this->imageProcessor->processAndSave($imageData, $this->outputPath, 'openai_'.time().'.jpg');
     }
 
     private function buildPrompt(string $gameName, string $videoDescription): string

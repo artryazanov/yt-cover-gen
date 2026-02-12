@@ -1,6 +1,7 @@
 # YouTube AI Cover Generator
 
-[![Tests](https://github.com/artryazanov/yt-cover-gen/actions/workflows/run-tests.yml/badge.svg)](https://github.com/artryazanov/yt-cover-gen/actions/workflows/run-tests.yml)
+[![Tests](https://github.com/artryazanov/yt-cover-gen/actions/workflows/tests.yml/badge.svg)](https://github.com/artryazanov/yt-cover-gen/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/artryazanov/yt-cover-gen/graph/badge.svg?token=CODECOV_TOKEN)](https://codecov.io/gh/artryazanov/yt-cover-gen)
 [![Latest Stable Version](https://poser.pugx.org/artryazanov/yt-cover-gen/v)](https://packagist.org/packages/artryazanov/yt-cover-gen)
 [![Total Downloads](https://poser.pugx.org/artryazanov/yt-cover-gen/downloads)](https://packagist.org/packages/artryazanov/yt-cover-gen)
 [![License](https://poser.pugx.org/artryazanov/yt-cover-gen/license)](https://packagist.org/packages/artryazanov/yt-cover-gen)

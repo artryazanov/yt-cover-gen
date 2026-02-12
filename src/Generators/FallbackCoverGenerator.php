@@ -9,12 +9,14 @@ use Throwable;
 class FallbackCoverGenerator implements CoverGeneratorInterface
 {
     private CoverGeneratorInterface $primary;
+
     private CoverGeneratorInterface $fallback;
+
     /** @var callable|null */
     private $errorHandler;
 
     public function __construct(
-        CoverGeneratorInterface $primary, 
+        CoverGeneratorInterface $primary,
         CoverGeneratorInterface $fallback,
         ?callable $errorHandler = null
     ) {
