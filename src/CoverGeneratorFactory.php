@@ -12,12 +12,17 @@ use Psr\Http\Message\StreamFactoryInterface;
 
 class CoverGeneratorFactory
 {
-    public static function createOpenAi(string $apiKey, ?string $outputPath = null, ?string $model = null, ?string $size = null): OpenAiCoverGenerator
-    {
+    public static function createOpenAi(
+        string $apiKey,
+        ?string $outputPath = null,
+        ?string $model = null,
+        ?string $size = null,
+        ?string $quality = null
+    ): OpenAiCoverGenerator {
         $client = OpenAI::client($apiKey);
         $imageProcessor = new ImageProcessor;
 
-        return new OpenAiCoverGenerator($client, $imageProcessor, $outputPath ?? sys_get_temp_dir(), $model, $size);
+        return new OpenAiCoverGenerator($client, $imageProcessor, $outputPath ?? sys_get_temp_dir(), $model, $size, $quality);
     }
 
     public static function createGemini(
@@ -26,7 +31,9 @@ class CoverGeneratorFactory
         RequestFactoryInterface $requestFactory,
         StreamFactoryInterface $streamFactory,
         ?string $outputPath = null,
-        ?string $model = null
+        ?string $model = null,
+        ?string $aspectRatio = null,
+        ?string $resolution = null
     ): GeminiCoverGenerator {
         $imageProcessor = new ImageProcessor;
 
@@ -37,7 +44,9 @@ class CoverGeneratorFactory
             $httpClient,
             $requestFactory,
             $streamFactory,
-            $apiKey
+            $apiKey,
+            $aspectRatio,
+            $resolution
         );
     }
 }

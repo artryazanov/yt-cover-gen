@@ -3,14 +3,16 @@
 namespace Artryazanov\YtCoverGen\Generators;
 
 use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
+use Artryazanov\YtCoverGen\Enums\GeminiAspectRatioEnum;
 use Artryazanov\YtCoverGen\Enums\GeminiModelEnum;
+use Artryazanov\YtCoverGen\Enums\GeminiResolutionEnum;
 use Artryazanov\YtCoverGen\Exceptions\GeminiResponseException;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use RuntimeException;
 
 class GeminiCoverGenerator implements CoverGeneratorInterface
 {
-    private const DEFAULT_MODEL = GeminiModelEnum::GEMINI_3_PRO_IMAGE_PREVIEW->value;
+    private const DEFAULT_MODEL = GeminiModelEnum::GEMINI_3_1_FLASH_IMAGE_PREVIEW->value;
 
     private $httpClient;
 
@@ -26,6 +28,10 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
 
     private string $model;
 
+    private string $aspectRatio;
+
+    private string $resolution;
+
     public function __construct(
         ImageProcessor $imageProcessor,
         string $outputPath = '/tmp',
@@ -33,7 +39,9 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         $httpClient = null, // PSR Client
         $requestFactory = null, // PSR RequestFactory
         $streamFactory = null, // PSR StreamFactory
-        ?string $apiKey = null
+        ?string $apiKey = null,
+        ?string $aspectRatio = null,
+        ?string $resolution = null
     ) {
 
         $this->imageProcessor = $imageProcessor;
@@ -43,6 +51,8 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         $this->requestFactory = $requestFactory;
         $this->streamFactory = $streamFactory;
         $this->apiKey = $apiKey;
+        $this->aspectRatio = $aspectRatio ?: getenv('YT_COVER_GEN_GEMINI_ASPECT_RATIO') ?: GeminiAspectRatioEnum::RATIO_16_9->value;
+        $this->resolution = $resolution ?: getenv('YT_COVER_GEN_GEMINI_RESOLUTION') ?: GeminiResolutionEnum::RES_1K->value;
     }
 
     public function generate(string $imagePath, string $gameName, string $videoDescription): string
@@ -93,6 +103,10 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
             ],
             'generationConfig' => [
                 'responseModalities' => ['TEXT', 'IMAGE'],
+                'imageConfig' => [
+                    'aspectRatio' => $this->aspectRatio,
+                    'imageSize' => $this->resolution,
+                ],
             ],
             'safetySettings' => [
                 [

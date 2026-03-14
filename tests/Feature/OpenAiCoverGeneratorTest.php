@@ -68,10 +68,11 @@ it('generates cover using OpenAI', function () {
     $this->images->shouldReceive('edit')
         ->once()
         ->with(Mockery::on(function ($args) {
-            return $args['model'] === 'gpt-image-1'
+            return $args['model'] === 'gpt-image-1.5'
                && is_resource($args['image'])
                && str_contains($args['prompt'], 'Create a viral YouTube thumbnail')
-               && $args['size'] === '1536x1024';
+               && $args['size'] === '1536x1024'
+               && $args['quality'] === 'auto';
         }))
         ->andReturn($mockResponse);
 

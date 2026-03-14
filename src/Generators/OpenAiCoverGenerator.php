@@ -4,15 +4,17 @@ namespace Artryazanov\YtCoverGen\Generators;
 
 use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\Enums\OpenAiModelEnum;
+use Artryazanov\YtCoverGen\Enums\OpenAiQualityEnum;
+use Artryazanov\YtCoverGen\Enums\OpenAiSizeEnum;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use OpenAI\Contracts\ClientContract;
 use RuntimeException;
 
 class OpenAiCoverGenerator implements CoverGeneratorInterface
 {
-    private const DEFAULT_IMAGE_SIZE = '1536x1024';
+    private const DEFAULT_IMAGE_SIZE = OpenAiSizeEnum::SIZE_1536x1024->value;
 
-    private const DEFAULT_MODEL = OpenAiModelEnum::GPT_IMAGE_1->value;
+    private const DEFAULT_MODEL = OpenAiModelEnum::GPT_IMAGE_1_5->value;
 
     private ClientContract $client;
 
@@ -24,18 +26,22 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
 
     private string $size;
 
+    private string $quality;
+
     public function __construct(
         ClientContract $client,
         ImageProcessor $imageProcessor,
         string $outputPath = '/tmp',
         ?string $model = null,
-        ?string $size = null
+        ?string $size = null,
+        ?string $quality = null
     ) {
         $this->client = $client;
         $this->imageProcessor = $imageProcessor;
         $this->outputPath = $outputPath;
         $this->model = $model ?? self::DEFAULT_MODEL;
         $this->size = $size ?? self::DEFAULT_IMAGE_SIZE;
+        $this->quality = $quality ?: getenv('YT_COVER_GEN_OPENAI_QUALITY') ?: OpenAiQualityEnum::AUTO->value;
     }
 
     public function generate(string $imagePath, string $gameName, string $videoDescription): string
@@ -58,7 +64,7 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
             'n' => 1,
             'size' => $this->size,
             'output_format' => 'jpeg', // As seen in OpenAiAssistant
-            'quality' => 'medium',     // As seen in OpenAiAssistant
+            'quality' => $this->quality,     // As seen in OpenAiAssistant
         ]);
 
         // The OpenAiAssistant assumes b64_json is returned even without response_format='b64_json'
