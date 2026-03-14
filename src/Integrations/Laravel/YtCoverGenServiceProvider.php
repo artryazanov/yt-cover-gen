@@ -4,15 +4,15 @@ namespace Artryazanov\YtCoverGen\Integrations\Laravel;
 
 use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\CoverGeneratorFactory;
+use Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\HttpFactory;
 use Illuminate\Support\ServiceProvider;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use RuntimeException;
 use Throwable;
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\HttpFactory;
-use Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator;
 
 class YtCoverGenServiceProvider extends ServiceProvider
 {

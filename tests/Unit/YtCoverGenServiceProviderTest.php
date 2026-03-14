@@ -1,13 +1,12 @@
 <?php
 
+use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator;
 use Artryazanov\YtCoverGen\Generators\GeminiCoverGenerator;
 use Artryazanov\YtCoverGen\Generators\OpenAiCoverGenerator;
 use Artryazanov\YtCoverGen\Integrations\Laravel\YtCoverGenServiceProvider;
-use RuntimeException;
 
 beforeEach(function () {
-    $this->provider = new YtCoverGenServiceProvider($this->app);
     $this->baseConfig = [
         'output_path' => '/tmp',
         'drivers' => [
@@ -27,7 +26,7 @@ it('registers primary openai driver without fallback', function () {
     $config['drivers']['gemini']['api_key'] = null; // No fallback
 
     config(['yt-cover-gen' => $config]);
-    $this->provider->register();
+    $this->app->register(YtCoverGenServiceProvider::class);
 
     $generator = $this->app->make(CoverGeneratorInterface::class);
 
@@ -39,7 +38,7 @@ it('registers primary openai driver with gemini fallback', function () {
     $config['driver'] = 'openai';
 
     config(['yt-cover-gen' => $config]);
-    $this->provider->register();
+    $this->app->register(YtCoverGenServiceProvider::class);
 
     $generator = $this->app->make(CoverGeneratorInterface::class);
 
@@ -62,7 +61,7 @@ it('registers primary gemini driver without fallback', function () {
     $config['drivers']['openai']['api_key'] = null; // No fallback
 
     config(['yt-cover-gen' => $config]);
-    $this->provider->register();
+    $this->app->register(YtCoverGenServiceProvider::class);
 
     $generator = $this->app->make(CoverGeneratorInterface::class);
 
@@ -74,7 +73,7 @@ it('registers primary gemini driver with openai fallback', function () {
     $config['driver'] = 'gemini';
 
     config(['yt-cover-gen' => $config]);
-    $this->provider->register();
+    $this->app->register(YtCoverGenServiceProvider::class);
 
     $generator = $this->app->make(CoverGeneratorInterface::class);
 
@@ -96,7 +95,7 @@ it('throws exception for unknown driver', function () {
     $config['driver'] = 'unknown';
 
     config(['yt-cover-gen' => $config]);
-    $this->provider->register();
+    $this->app->register(YtCoverGenServiceProvider::class);
 
     $this->app->make(CoverGeneratorInterface::class);
-})->throws(\RuntimeException::class, 'Unknown driver: unknown');
+})->throws(RuntimeException::class, 'Unknown driver: unknown');

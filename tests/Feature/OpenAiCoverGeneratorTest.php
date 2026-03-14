@@ -2,9 +2,9 @@
 
 use Artryazanov\YtCoverGen\Generators\OpenAiCoverGenerator;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
-use OpenAI\Responses\Images\EditResponse;
 use OpenAI\Contracts\ClientContract;
 use OpenAI\Contracts\Resources\ImagesContract;
+use OpenAI\Responses\Images\EditResponse;
 
 beforeEach(function () {
     // Debug info
