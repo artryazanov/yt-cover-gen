@@ -3,10 +3,12 @@
 use Artryazanov\YtCoverGen\Generators\OpenAiCoverGenerator;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use OpenAI\Responses\Images\EditResponse;
+use OpenAI\Contracts\ClientContract;
+use OpenAI\Contracts\Resources\ImagesContract;
 
 beforeEach(function () {
     // Debug info
-    $interface = \OpenAI\Contracts\ClientContract::class;
+    $interface = ClientContract::class;
     if (! interface_exists($interface)) {
         echo "Interface $interface NOT FOUND. Attempting eager load...\n";
         if (file_exists(__DIR__.'/../../vendor/autoload.php')) {
@@ -14,8 +16,8 @@ beforeEach(function () {
         }
     }
 
-    $this->client = Mockery::mock(\OpenAI\Contracts\ClientContract::class);
-    $this->images = Mockery::mock(\OpenAI\Contracts\Resources\ImagesContract::class);
+    $this->client = Mockery::mock(ClientContract::class);
+    $this->images = Mockery::mock(ImagesContract::class);
     $this->client->allows()->images()->andReturn($this->images);
 
     $this->imageProcessor = new ImageProcessor;

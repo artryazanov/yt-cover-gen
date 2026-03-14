@@ -8,6 +8,11 @@ use Illuminate\Support\ServiceProvider;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use RuntimeException;
+use Throwable;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\HttpFactory;
+use Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator;
 
 class YtCoverGenServiceProvider extends ServiceProvider
 {
@@ -42,9 +47,9 @@ class YtCoverGenServiceProvider extends ServiceProvider
 
             // Helper to create Gemini Generator
             $createGemini = function () use ($app, $config, $outputPath) {
-                $httpClient = $app->bound(ClientInterface::class) ? $app->make(ClientInterface::class) : new \GuzzleHttp\Client;
-                $requestFactory = $app->bound(RequestFactoryInterface::class) ? $app->make(RequestFactoryInterface::class) : new \GuzzleHttp\Psr7\HttpFactory;
-                $streamFactory = $app->bound(StreamFactoryInterface::class) ? $app->make(StreamFactoryInterface::class) : new \GuzzleHttp\Psr7\HttpFactory;
+                $httpClient = $app->bound(ClientInterface::class) ? $app->make(ClientInterface::class) : new Client;
+                $requestFactory = $app->bound(RequestFactoryInterface::class) ? $app->make(RequestFactoryInterface::class) : new HttpFactory;
+                $streamFactory = $app->bound(StreamFactoryInterface::class) ? $app->make(StreamFactoryInterface::class) : new HttpFactory;
 
                 return CoverGeneratorFactory::createGemini(
                     $config['drivers']['gemini']['api_key'],
@@ -58,7 +63,7 @@ class YtCoverGenServiceProvider extends ServiceProvider
                 );
             };
 
-            $errorHandler = function (\Throwable $e) {
+            $errorHandler = function (Throwable $e) {
                 // Use global helper if available, or just log
                 if (function_exists('report')) {
                     report($e);
@@ -72,7 +77,7 @@ class YtCoverGenServiceProvider extends ServiceProvider
                 if (! empty($config['drivers']['gemini']['api_key'])) {
                     $secondary = $createGemini();
 
-                    return new \Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator($primary, $secondary, $errorHandler);
+                    return new FallbackCoverGenerator($primary, $secondary, $errorHandler);
                 }
 
                 return $primary;
@@ -85,13 +90,13 @@ class YtCoverGenServiceProvider extends ServiceProvider
                 if (! empty($config['drivers']['openai']['api_key'])) {
                     $secondary = $createOpenAi();
 
-                    return new \Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator($primary, $secondary, $errorHandler);
+                    return new FallbackCoverGenerator($primary, $secondary, $errorHandler);
                 }
 
                 return $primary;
             }
 
-            throw new \RuntimeException("Unknown driver: $driver");
+            throw new RuntimeException("Unknown driver: $driver");
         });
     }
 }

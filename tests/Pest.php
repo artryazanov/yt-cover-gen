@@ -11,7 +11,9 @@
 |
 */
 
-pest()->extend(Artryazanov\YtCoverGen\Tests\TestCase::class)
+use Artryazanov\YtCoverGen\Tests\TestCase;
+
+pest()->extend(TestCase::class)
     ->in('Feature', 'Unit');
 
 /*
