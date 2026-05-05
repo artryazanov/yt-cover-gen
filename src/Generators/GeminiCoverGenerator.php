@@ -159,6 +159,8 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
 
     private function buildPrompt(string $gameName, string $videoDescription): string
     {
+        $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $videoDescription);
+
         $prompt = "Act as a world-class YouTube thumbnail designer.\r\n";
         $prompt .= "Task: Create a viral, high-click-through-rate (CTR) thumbnail based on the attached gameplay screenshot.\r\n";
         $prompt .= "The game is \"$gameName\".\r\n";
@@ -167,11 +169,16 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         $prompt .= "    Subject: Enhance the main character or focal point on the screenshot.\r\n";
         $prompt .= "    Color: Vibrant and high-contrast, but strictly within the game's official color palette.\r\n";
         $prompt .= "Text & Branding:\r\n";
-        $prompt .= "    1. HEADLINE: Add the text \"$videoDescription\". Make the text MASSIVE and DOMINANT.\r\n";
+        $prompt .= "    1. HEADLINE: Condense \"$videoDescription\" into a short, punchy 2-5 word clickbaity text. Make the text MASSIVE and DOMINANT.\r\n";
         $prompt .= "    2. LOGO: Integrate the official \"$gameName\" logo in one corner. Make the logo OVERSIZED.\r\n";
+
+        if ($is360) {
+            $prompt .= "    3. BADGE: Add a prominent and recognizable '360° Video' logo so users immediately know it's a panoramic video.\r\n";
+        }
+
         $prompt .= "    NEGATIVE CONSTRAINT: Do NOT duplicate the logo. Do NOT write the game name as plain text separate from the logo. Show the logo EXACTLY ONCE.\r\n";
         $prompt .= "    HEADLINE & LOGO should be maximum readability against the background.\r\n";
-        $prompt .= "    Place HEADLINE & LOGO strategically so them doesn't cover the main focal point.\r\n";
+        $prompt .= "    Place HEADLINE & LOGO strategically so they don't cover the main focal point.\r\n";
 
         return $prompt;
     }

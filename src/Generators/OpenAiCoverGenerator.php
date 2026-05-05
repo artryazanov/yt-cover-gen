@@ -79,13 +79,20 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
     {
         // Truncate inputs to prevent prompt overflow (limit is 1000 chars)
         $gameNameShort = mb_substr($gameName, 0, 60);
-        $descShort = mb_substr($videoDescription, 0, 150);
+        $descShort = mb_substr($videoDescription, 0, 300);
+
+        $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $descShort);
 
         $prompt = "Create a viral YouTube thumbnail for '$gameNameShort' from this screenshot.\n";
         $prompt .= "Style: Official '$gameNameShort' art style, vibrant, high contrast.\n";
         $prompt .= "Add Elements:\n";
-        $prompt .= "1. HEADLINE: '$descShort' (Massive, Readable).\n";
+        $prompt .= "1. HEADLINE: Condense '$descShort' into a short, punchy 2-5 word clickbaity text (Massive, Readable).\n";
         $prompt .= "2. LOGO: '$gameNameShort' logo in corner (Oversized, show ONCE).\n";
+
+        if ($is360) {
+            $prompt .= "3. BADGE: Prominent and recognizable '360° Video' logo so users immediately know it's panoramic.\n";
+        }
+
         $prompt .= "Ensure text/logo do not cover main focal point.\n";
         $prompt .= "Resolution: {$this->size}.";
 
