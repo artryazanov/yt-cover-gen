@@ -83,3 +83,39 @@ it('generates cover using OpenAI', function () {
     expect($path)->toBeString();
     expect(file_exists($path))->toBeTrue();
 });
+
+it('generates cover using OpenAI and includes 360 badge prompt when requested', function () {
+    $generator = new OpenAiCoverGenerator($this->client, $this->imageProcessor, $this->tempDir);
+
+    $img = imagecreatetruecolor(10, 10);
+    ob_start();
+    imagejpeg($img);
+    $realImageData = ob_get_clean();
+    imagedestroy($img);
+    $b64 = base64_encode($realImageData);
+
+    $mockResponse = EditResponse::fake([
+        'data' => [
+            [
+                'b64_json' => $b64,
+            ],
+        ],
+    ]);
+
+    $this->images->shouldReceive('edit')
+        ->once()
+        ->with(Mockery::on(function ($args) {
+            return $args['model'] === 'gpt-image-1.5'
+               && is_resource($args['image'])
+               && str_contains($args['prompt'], 'Create a viral YouTube thumbnail')
+               && str_contains($args['prompt'], '360° Video')
+               && $args['size'] === '1536x1024'
+               && $args['quality'] === 'auto';
+        }))
+        ->andReturn($mockResponse);
+
+    $path = $generator->generate($this->dummyImage, 'Game Name', 'Awesome 360 video');
+
+    expect($path)->toBeString();
+    expect(file_exists($path))->toBeTrue();
+});

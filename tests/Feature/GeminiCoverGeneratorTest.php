@@ -110,3 +110,71 @@ it('generates cover using Gemini Beta API', function () {
 
     expect(file_exists($path))->toBeTrue();
 });
+
+it('generates cover using Gemini Beta API and includes 360 badge prompt when requested', function () {
+    $generator = new GeminiCoverGenerator(
+        $this->imageProcessor,
+        $this->tempDir,
+        'gemini-3-pro-image-preview',
+        $this->httpClient,
+        $this->requestFactory,
+        $this->streamFactory,
+        'test-api-key'
+    );
+
+    // Prepare Request Mock
+    $request = Mockery::mock(RequestInterface::class);
+    $request->shouldReceive('withHeader')->with('Content-Type', 'application/json')->andReturnSelf();
+    $request->shouldReceive('withBody')->andReturnSelf();
+
+    $this->requestFactory->shouldReceive('createRequest')
+        ->with('POST', Mockery::pattern('/gemini-3-pro-image-preview:generateContent/'))
+        ->andReturn($request);
+
+    $this->streamFactory->shouldReceive('createStream')
+        ->with(Mockery::on(function ($jsonPayload) {
+            return str_contains($jsonPayload, '360\u00b0 Video');
+        }))
+        ->andReturn(Mockery::mock(StreamInterface::class));
+
+    // Prepare Response Mock
+    // Create valid image data
+    $img = imagecreatetruecolor(10, 10);
+    ob_start();
+    imagejpeg($img);
+    $realImageData = ob_get_clean();
+    imagedestroy($img);
+    $b64 = base64_encode($realImageData);
+
+    $jsonResponse = json_encode([
+        'candidates' => [
+            [
+                'content' => [
+                    'parts' => [
+                        [
+                            'inlineData' => [
+                                'mime_type' => 'image/jpeg',
+                                'data' => $b64,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $responseBody = Mockery::mock(StreamInterface::class);
+    $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
+
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->shouldReceive('getStatusCode')->andReturn(200);
+    $response->shouldReceive('getBody')->andReturn($responseBody);
+
+    $this->httpClient->shouldReceive('sendRequest')
+        ->once()
+        ->andReturn($response);
+
+    $path = $generator->generate($this->dummyImage, 'GameName', 'Awesome 360 video');
+
+    expect(file_exists($path))->toBeTrue();
+});
