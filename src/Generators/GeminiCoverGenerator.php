@@ -2,7 +2,6 @@
 
 namespace Artryazanov\YtCoverGen\Generators;
 
-use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\Enums\GeminiAspectRatioEnum;
 use Artryazanov\YtCoverGen\Enums\GeminiImageModelEnum;
 use Artryazanov\YtCoverGen\Enums\GeminiResolutionEnum;
@@ -11,7 +10,7 @@ use Artryazanov\YtCoverGen\Exceptions\GeminiResponseException;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use RuntimeException;
 
-class GeminiCoverGenerator implements CoverGeneratorInterface
+class GeminiCoverGenerator extends AbstractCoverGenerator
 {
     private const DEFAULT_MODEL = GeminiImageModelEnum::GEMINI_3_1_FLASH_IMAGE->value;
 
@@ -22,14 +21,6 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
     private $streamFactory;
 
     private ?string $apiKey;
-
-    private ImageProcessor $imageProcessor;
-
-    private string $outputPath;
-
-    private string $model;
-
-    private string $textModel;
 
     private string $aspectRatio;
 
@@ -47,11 +38,13 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         ?string $aspectRatio = null,
         ?string $resolution = null
     ) {
+        parent::__construct(
+            $imageProcessor,
+            $outputPath,
+            $model ?? self::DEFAULT_MODEL,
+            $textModel ?? GeminiTextModelEnum::GEMINI_3_1_PRO_PREVIEW->value
+        );
 
-        $this->imageProcessor = $imageProcessor;
-        $this->outputPath = $outputPath;
-        $this->model = $model ?? self::DEFAULT_MODEL;
-        $this->textModel = $textModel ?? GeminiTextModelEnum::GEMINI_3_1_PRO_PREVIEW->value;
         $this->httpClient = $httpClient;
         $this->requestFactory = $requestFactory;
         $this->streamFactory = $streamFactory;
@@ -60,24 +53,12 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         $this->resolution = $resolution ?: getenv('YT_COVER_GEN_GEMINI_RESOLUTION') ?: GeminiResolutionEnum::RES_1K->value;
     }
 
-    public function generate(string $imagePath, string $gameName, string $videoDescription, ?string $gameCoverPath = null): string
+    protected function doGenerate(string $imagePath, string $prompt, ?string $gameCoverPath = null): string
     {
-        if (! file_exists($imagePath)) {
-            throw new RuntimeException("Image file not found: $imagePath");
-        }
-
         if (! $this->httpClient || ! $this->apiKey) {
             throw new RuntimeException('PSR Client and API Key required for Gemini models.');
         }
 
-        $clickbaitTitle = $this->generateClickbaitTitle($gameName, $videoDescription);
-        $prompt = $this->buildPrompt($gameName, $clickbaitTitle, $gameCoverPath);
-
-        return $this->generateWithRawBetaApi($imagePath, $prompt, $gameCoverPath);
-    }
-
-    private function generateWithRawBetaApi(string $imagePath, string $prompt, ?string $gameCoverPath = null): string
-    {
         $imageBase64 = $this->imageProcessor->imageToBase64($imagePath);
 
         // Strict match of ExtendedGeminiClient logic
@@ -188,14 +169,14 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         throw new GeminiResponseException('No image found in Gemini Beta response. Response: '.json_encode($json));
     }
 
-    private function generateClickbaitTitle(string $gameName, string $videoDescription): string
+    protected function generateClickbaitTitle(string $gameName, string $videoDescription): string
     {
         $payload = [
             'contents' => [
                 [
                     'parts' => [
                         [
-                            'text' => "You are an expert YouTube strategist. Your task is to generate a short, highly enticing, clickbait thumbnail title (maximum 5 words) based on the user's video description.\nCRITICAL NEGATIVE CONSTRAINT: Do NOT invent, promise, or mention any features, items, characters, or events that are not explicitly present in the description. The clickbait must be 100% truthful.\n\nGame: $gameName\nDescription: $videoDescription",
+                            'text' => $this->getClickbaitSystemPrompt() . "\n\nGame: $gameName\nInput: $videoDescription",
                         ],
                     ],
                 ],
@@ -207,6 +188,10 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         ];
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->textModel}:generateContent?key={$this->apiKey}";
+
+        if (! $this->httpClient || ! $this->apiKey) {
+            return $videoDescription;
+        }
 
         $request = $this->requestFactory->createRequest('POST', $url)
             ->withHeader('Content-Type', 'application/json');
@@ -226,7 +211,7 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         return trim(trim($title, '"\' '));
     }
 
-    private function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string
+    protected function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string
     {
         $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $generatedTitle);
 

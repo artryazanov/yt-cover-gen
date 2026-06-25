@@ -2,30 +2,20 @@
 
 namespace Artryazanov\YtCoverGen\Generators;
 
-use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\Enums\OpenAiImageModelEnum;
 use Artryazanov\YtCoverGen\Enums\OpenAiQualityEnum;
 use Artryazanov\YtCoverGen\Enums\OpenAiSizeEnum;
 use Artryazanov\YtCoverGen\Enums\OpenAiTextModelEnum;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use OpenAI\Contracts\ClientContract;
-use RuntimeException;
 
-class OpenAiCoverGenerator implements CoverGeneratorInterface
+class OpenAiCoverGenerator extends AbstractCoverGenerator
 {
     private const DEFAULT_IMAGE_SIZE = OpenAiSizeEnum::SIZE_1536x1024->value;
 
     private const DEFAULT_MODEL = OpenAiImageModelEnum::GPT_IMAGE_2->value;
 
     private ClientContract $client;
-
-    private ImageProcessor $imageProcessor;
-
-    private string $outputPath;
-
-    private string $model;
-
-    private string $textModel;
 
     private string $size;
 
@@ -40,24 +30,20 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
         ?string $size = null,
         ?string $quality = null
     ) {
+        parent::__construct(
+            $imageProcessor,
+            $outputPath,
+            $model ?? self::DEFAULT_MODEL,
+            $textModel ?? OpenAiTextModelEnum::GPT_5_5->value
+        );
+
         $this->client = $client;
-        $this->imageProcessor = $imageProcessor;
-        $this->outputPath = $outputPath;
-        $this->model = $model ?? self::DEFAULT_MODEL;
-        $this->textModel = $textModel ?? OpenAiTextModelEnum::GPT_5_5->value;
         $this->size = $size ?? self::DEFAULT_IMAGE_SIZE;
         $this->quality = $quality ?: getenv('YT_COVER_GEN_OPENAI_QUALITY') ?: OpenAiQualityEnum::AUTO->value;
     }
 
-    public function generate(string $imagePath, string $gameName, string $videoDescription, ?string $gameCoverPath = null): string
+    protected function doGenerate(string $imagePath, string $prompt, ?string $gameCoverPath = null): string
     {
-        if (! file_exists($imagePath)) {
-            throw new RuntimeException("Image file not found: $imagePath");
-        }
-
-        $clickbaitTitle = $this->generateClickbaitTitle($gameName, $videoDescription);
-        $prompt = $this->buildPrompt($gameName, $clickbaitTitle);
-
         // Use a temporary local file handle for the request
         // The original implementation sends the file directly.
         // We assume the environment supports the format provided (e.g. JPEG) as per OpenAiAssistant reference.
@@ -80,18 +66,18 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
         return $this->imageProcessor->processAndSave($imageData, $this->outputPath, 'openai_'.time().'.jpg');
     }
 
-    private function generateClickbaitTitle(string $gameName, string $videoDescription): string
+    protected function generateClickbaitTitle(string $gameName, string $videoDescription): string
     {
         $response = $this->client->chat()->create([
             'model' => $this->textModel,
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => 'You are an expert YouTube strategist. Your task is to generate a short, highly enticing, clickbait thumbnail title (maximum 5 words) based on the user\'s video description. CRITICAL NEGATIVE CONSTRAINT: Do NOT invent, promise, or mention any features, items, characters, or events that are not explicitly present in the description. The clickbait must be 100% truthful.',
+                    'content' => $this->getClickbaitSystemPrompt(),
                 ],
                 [
                     'role' => 'user',
-                    'content' => "Game: $gameName\nDescription: $videoDescription",
+                    'content' => "Game: $gameName\nInput: $videoDescription",
                 ],
             ],
             'max_tokens' => 20,
@@ -103,7 +89,7 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
         return trim(trim($title, '"\' '));
     }
 
-    private function buildPrompt(string $gameName, string $generatedTitle): string
+    protected function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string
     {
         // Truncate inputs to prevent prompt overflow (limit is 1000 chars)
         $gameNameShort = mb_substr($gameName, 0, 60);
