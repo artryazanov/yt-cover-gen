@@ -81,7 +81,6 @@ class OpenAiCoverGenerator extends AbstractCoverGenerator
                 ],
             ],
             'max_completion_tokens' => 20,
-            'temperature' => 0.7,
         ]);
 
         $title = $response->choices[0]->message->content ?? $videoDescription;
