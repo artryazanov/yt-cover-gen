@@ -4,8 +4,8 @@ use Artryazanov\YtCoverGen\Generators\OpenAiCoverGenerator;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use OpenAI\Contracts\ClientContract;
 use OpenAI\Contracts\Resources\ImagesContract;
-use OpenAI\Responses\Images\EditResponse;
 use OpenAI\Responses\Chat\CreateResponse;
+use OpenAI\Responses\Images\EditResponse;
 
 beforeEach(function () {
     // Debug info
@@ -73,10 +73,10 @@ it('generates cover using OpenAI', function () {
         'choices' => [
             [
                 'message' => [
-                    'content' => 'Description'
-                ]
-            ]
-        ]
+                    'content' => 'Description',
+                ],
+            ],
+        ],
     ]);
     $chatMock->shouldReceive('create')->once()->andReturn($chatResponseMock);
     $this->client->allows()->chat()->andReturn($chatMock);
@@ -121,10 +121,10 @@ it('generates cover using OpenAI and includes 360 badge prompt when requested', 
         'choices' => [
             [
                 'message' => [
-                    'content' => 'Awesome 360 video'
-                ]
-            ]
-        ]
+                    'content' => 'Awesome 360 video',
+                ],
+            ],
+        ],
     ]);
     $chatMock->shouldReceive('create')->once()->andReturn($chatResponseMock);
     $this->client->allows()->chat()->andReturn($chatMock);

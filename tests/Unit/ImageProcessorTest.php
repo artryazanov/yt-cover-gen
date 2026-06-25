@@ -105,8 +105,7 @@ it('generates filename and creates dir when saving', function () {
     expect(file_exists($path))->toBeTrue();
     expect(dirname($path))->toBe($newDir);
     expect(pathinfo($path, PATHINFO_EXTENSION))->toBe('jpeg');
-    
+
     unlink($path);
     rmdir($newDir);
 });
-

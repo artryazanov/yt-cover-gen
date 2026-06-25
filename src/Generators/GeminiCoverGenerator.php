@@ -5,8 +5,8 @@ namespace Artryazanov\YtCoverGen\Generators;
 use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\Enums\GeminiAspectRatioEnum;
 use Artryazanov\YtCoverGen\Enums\GeminiImageModelEnum;
-use Artryazanov\YtCoverGen\Enums\GeminiTextModelEnum;
 use Artryazanov\YtCoverGen\Enums\GeminiResolutionEnum;
+use Artryazanov\YtCoverGen\Enums\GeminiTextModelEnum;
 use Artryazanov\YtCoverGen\Exceptions\GeminiResponseException;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use RuntimeException;
@@ -116,7 +116,7 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
             }
 
             $parts[] = [
-                'text' => "Here is the official game cover image. Use the logo from this second image as an EXACT reference for drawing the game logo in the thumbnail:",
+                'text' => 'Here is the official game cover image. Use the logo from this second image as an EXACT reference for drawing the game logo in the thumbnail:',
             ];
             $parts[] = [
                 'inline_data' => [
@@ -222,7 +222,7 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
 
         $json = json_decode($response->getBody()->getContents(), true);
         $title = $json['candidates'][0]['content']['parts'][0]['text'] ?? $videoDescription;
-        
+
         return trim(trim($title, '"\' '));
     }
 

@@ -110,16 +110,16 @@ it('generates cover using Gemini Beta API', function () {
             [
                 'content' => [
                     'parts' => [
-                        ['text' => 'VideoDesc']
-                    ]
-                ]
-            ]
-        ]
+                        ['text' => 'VideoDesc'],
+                    ],
+                ],
+            ],
+        ],
     ]);
-    
+
     $textResponseBody = Mockery::mock(StreamInterface::class);
     $textResponseBody->shouldReceive('getContents')->andReturn($textJsonResponse);
-    
+
     $textResponse = Mockery::mock(ResponseInterface::class);
     $textResponse->shouldReceive('getStatusCode')->andReturn(200);
     $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
@@ -195,16 +195,16 @@ it('generates cover using Gemini Beta API and includes 360 badge prompt when req
             [
                 'content' => [
                     'parts' => [
-                        ['text' => 'Awesome 360 video']
-                    ]
-                ]
-            ]
-        ]
+                        ['text' => 'Awesome 360 video'],
+                    ],
+                ],
+            ],
+        ],
     ]);
-    
+
     $textResponseBody = Mockery::mock(StreamInterface::class);
     $textResponseBody->shouldReceive('getContents')->andReturn($textJsonResponse);
-    
+
     $textResponse = Mockery::mock(ResponseInterface::class);
     $textResponse->shouldReceive('getStatusCode')->andReturn(200);
     $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
@@ -249,7 +249,7 @@ it('generates cover using Gemini Beta API with game cover reference', function (
     $img = imagecreatetruecolor(20, 20);
     imagepng($img, $gameCoverPath);
     imagedestroy($img);
-    
+
     // Prepare Request Mock
     $request = Mockery::mock(RequestInterface::class);
     $request->shouldReceive('withHeader')->with('Content-Type', 'application/json')->andReturnSelf();
@@ -299,16 +299,16 @@ it('generates cover using Gemini Beta API with game cover reference', function (
             [
                 'content' => [
                     'parts' => [
-                        ['text' => 'VideoDesc']
-                    ]
-                ]
-            ]
-        ]
+                        ['text' => 'VideoDesc'],
+                    ],
+                ],
+            ],
+        ],
     ]);
-    
+
     $textResponseBody = Mockery::mock(StreamInterface::class);
     $textResponseBody->shouldReceive('getContents')->andReturn($textJsonResponse);
-    
+
     $textResponse = Mockery::mock(ResponseInterface::class);
     $textResponse->shouldReceive('getStatusCode')->andReturn(200);
     $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
@@ -338,7 +338,7 @@ it('handles gif and webp extensions and handles clickbait error', function () {
     $gifImage = $this->tempDir.'/input.gif';
     $img = imagecreatetruecolor(10, 10);
     imagegif($img, $gifImage);
-    
+
     $webpCover = $this->tempDir.'/cover.webp';
     // Just empty file for extension check
     file_put_contents($webpCover, 'fake webp');
@@ -394,5 +394,3 @@ it('handles gif and webp extensions and handles clickbait error', function () {
 
     expect(file_exists($path))->toBeTrue();
 });
-
-

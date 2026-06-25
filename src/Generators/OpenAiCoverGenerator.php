@@ -4,9 +4,9 @@ namespace Artryazanov\YtCoverGen\Generators;
 
 use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\Enums\OpenAiImageModelEnum;
-use Artryazanov\YtCoverGen\Enums\OpenAiTextModelEnum;
 use Artryazanov\YtCoverGen\Enums\OpenAiQualityEnum;
 use Artryazanov\YtCoverGen\Enums\OpenAiSizeEnum;
+use Artryazanov\YtCoverGen\Enums\OpenAiTextModelEnum;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use OpenAI\Contracts\ClientContract;
 use RuntimeException;
@@ -86,12 +86,12 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
             'model' => $this->textModel,
             'messages' => [
                 [
-                    'role' => 'system', 
-                    'content' => 'You are an expert YouTube strategist. Your task is to generate a short, highly enticing, clickbait thumbnail title (maximum 5 words) based on the user\'s video description. CRITICAL NEGATIVE CONSTRAINT: Do NOT invent, promise, or mention any features, items, characters, or events that are not explicitly present in the description. The clickbait must be 100% truthful.'
+                    'role' => 'system',
+                    'content' => 'You are an expert YouTube strategist. Your task is to generate a short, highly enticing, clickbait thumbnail title (maximum 5 words) based on the user\'s video description. CRITICAL NEGATIVE CONSTRAINT: Do NOT invent, promise, or mention any features, items, characters, or events that are not explicitly present in the description. The clickbait must be 100% truthful.',
                 ],
                 [
-                    'role' => 'user', 
-                    'content' => "Game: $gameName\nDescription: $videoDescription"
+                    'role' => 'user',
+                    'content' => "Game: $gameName\nDescription: $videoDescription",
                 ],
             ],
             'max_tokens' => 20,
@@ -99,6 +99,7 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
         ]);
 
         $title = $response->choices[0]->message->content ?? $videoDescription;
+
         return trim(trim($title, '"\' '));
     }
 
@@ -115,7 +116,7 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
         $prompt .= "Add Elements:\n";
         $prompt .= "1. HEADLINE: Render EXACTLY this text: '$titleShort'. Do not change a single letter. Make it Massive and Readable.\n";
         $prompt .= "2. LOGO: '$gameNameShort' logo in corner (Oversized, show ONCE).\n";
-        
+
         if ($is360) {
             $prompt .= "3. BADGE: Prominent and recognizable '360° Video' logo so users immediately know it's panoramic.\n";
         }
