@@ -80,7 +80,6 @@ class OpenAiCoverGenerator extends AbstractCoverGenerator
                     'content' => "Game: $gameName\nInput: $videoDescription",
                 ],
             ],
-            'max_completion_tokens' => 20,
         ]);
 
         $title = $response->choices[0]->message->content ?? $videoDescription;

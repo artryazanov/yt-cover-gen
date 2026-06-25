@@ -183,7 +183,6 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
             ],
             'generationConfig' => [
                 'temperature' => 0.7,
-                'maxOutputTokens' => 20,
             ],
         ];
 
