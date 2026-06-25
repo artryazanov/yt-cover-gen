@@ -72,12 +72,8 @@ class OpenAiCoverGenerator extends AbstractCoverGenerator
             'model' => $this->textModel,
             'messages' => [
                 [
-                    'role' => 'system',
-                    'content' => $this->getShortTitleSystemPrompt(),
-                ],
-                [
                     'role' => 'user',
-                    'content' => "Game: $gameName\nInput: $videoDescription",
+                    'content' => $this->getShortTitleSystemPrompt($gameName, $videoDescription),
                 ],
             ],
         ]);
@@ -87,13 +83,13 @@ class OpenAiCoverGenerator extends AbstractCoverGenerator
         return trim(trim($title, '"\' '));
     }
 
-    protected function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string
+    protected function buildPrompt(string $gameName, string $generatedTitle, string $originalDescription, ?string $gameCoverPath = null): string
     {
         // Truncate inputs to prevent prompt overflow (limit is 1000 chars)
         $gameNameShort = mb_substr($gameName, 0, 60);
         $titleShort = mb_substr($generatedTitle, 0, 150);
 
-        $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $generatedTitle);
+        $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $originalDescription);
 
         $prompt = "Create a viral YouTube thumbnail for '$gameNameShort' from this screenshot.\n";
         $prompt .= "Style: Official '$gameNameShort' art style, vibrant, high contrast.\n";

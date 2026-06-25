@@ -8,6 +8,8 @@ use RuntimeException;
 
 abstract class AbstractCoverGenerator implements CoverGeneratorInterface
 {
+    protected const MAX_WORDS_FOR_DIRECT_OUTPUT = 5;
+
     protected ImageProcessor $imageProcessor;
 
     protected string $outputPath;
@@ -35,25 +37,28 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
         }
 
         $wordCount = count(preg_split('/\s+/u', trim($videoDescription), -1, PREG_SPLIT_NO_EMPTY));
-        if ($wordCount <= 5) {
+        if ($wordCount <= self::MAX_WORDS_FOR_DIRECT_OUTPUT) {
             $shortTitle = $videoDescription;
         } else {
             $shortTitle = $this->generateShortTitle($gameName, $videoDescription);
         }
 
-        $prompt = $this->buildPrompt($gameName, $shortTitle, $gameCoverPath);
+        $prompt = $this->buildPrompt($gameName, $shortTitle, $videoDescription, $gameCoverPath);
 
         return $this->doGenerate($imagePath, $prompt, $gameCoverPath);
     }
 
     abstract protected function generateShortTitle(string $gameName, string $videoDescription): string;
 
-    abstract protected function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string;
+    abstract protected function buildPrompt(string $gameName, string $generatedTitle, string $originalDescription, ?string $gameCoverPath = null): string;
 
     abstract protected function doGenerate(string $imagePath, string $prompt, ?string $gameCoverPath = null): string;
 
-    protected function getShortTitleSystemPrompt(): string
+    protected function getShortTitleSystemPrompt(string $gameName, string $videoDescription): string
     {
-        return "Condense the provided text into a short, punchy 2-5 word clickbaity phrase for a YouTube thumbnail.\n\nOutput ONLY the final short phrase, without quotes, introductions, or explanations.";
+        return "Condense the provided text into a short, punchy 2-5 word clickbaity phrase for a YouTube gaming video thumbnail.\n\n"
+            . "Game: {$gameName}\n"
+            . "Input: {$videoDescription}\n\n"
+            . "Output ONLY the final short phrase, without quotes, introductions, or explanations.";
     }
 }

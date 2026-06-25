@@ -176,7 +176,7 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
                 [
                     'parts' => [
                         [
-                            'text' => $this->getShortTitleSystemPrompt()."\n\nGame: $gameName\nInput: $videoDescription",
+                            'text' => $this->getShortTitleSystemPrompt($gameName, $videoDescription),
                         ],
                     ],
                 ],
@@ -210,9 +210,9 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
         return trim(trim($title, '"\' '));
     }
 
-    protected function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string
+    protected function buildPrompt(string $gameName, string $generatedTitle, string $originalDescription, ?string $gameCoverPath = null): string
     {
-        $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $generatedTitle);
+        $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $originalDescription);
 
         $prompt = "Act as a world-class YouTube thumbnail designer.\r\n";
         $prompt .= "Task: Create a viral, high-click-through-rate (CTR) thumbnail based on the attached gameplay screenshot.\r\n";
