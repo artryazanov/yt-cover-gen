@@ -34,20 +34,20 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
             throw new RuntimeException("Image file not found: $imagePath");
         }
 
-        $clickbaitTitle = $this->generateClickbaitTitle($gameName, $videoDescription);
-        $prompt = $this->buildPrompt($gameName, $clickbaitTitle, $gameCoverPath);
+        $shortTitle = $this->generateShortTitle($gameName, $videoDescription);
+        $prompt = $this->buildPrompt($gameName, $shortTitle, $gameCoverPath);
 
         return $this->doGenerate($imagePath, $prompt, $gameCoverPath);
     }
 
-    abstract protected function generateClickbaitTitle(string $gameName, string $videoDescription): string;
+    abstract protected function generateShortTitle(string $gameName, string $videoDescription): string;
 
     abstract protected function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string;
 
     abstract protected function doGenerate(string $imagePath, string $prompt, ?string $gameCoverPath = null): string;
 
-    protected function getClickbaitSystemPrompt(): string
+    protected function getShortTitleSystemPrompt(): string
     {
-        return "You are an expert YouTube strategist. Your task is to generate a short, highly enticing, clickbait thumbnail title (maximum 5 words) based on the user's input (which can be a video title or description).\nRules:\n1. If the input is long, extract the core exciting part and shorten it to a punchy clickbait phrase.\n2. If the input is already short (5 words or less), leave it exactly as is without any additions.\nCRITICAL NEGATIVE CONSTRAINT: Do NOT invent, promise, or mention any features, items, characters, or events that are not explicitly present in the input. The clickbait must be 100% truthful.";
+        return "You are a YouTube thumbnail text generator. The text you generate will be placed in huge font directly on the video cover, so it must be extremely concise to be highly visible.\nRules:\n1. If the user's input is already short, return it EXACTLY as is without any modifications.\n2. If the input is long, rewrite it into a very short, punchy phrase that captures the core essence of the original title. You should omit details, subtitles, or secondary information, as long as the main subject remains clear.\n3. Output ONLY the text that will be printed on the thumbnail, nothing else.";
     }
 }

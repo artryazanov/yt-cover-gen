@@ -66,14 +66,14 @@ class OpenAiCoverGenerator extends AbstractCoverGenerator
         return $this->imageProcessor->processAndSave($imageData, $this->outputPath, 'openai_'.time().'.jpg');
     }
 
-    protected function generateClickbaitTitle(string $gameName, string $videoDescription): string
+    protected function generateShortTitle(string $gameName, string $videoDescription): string
     {
         $response = $this->client->chat()->create([
             'model' => $this->textModel,
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => $this->getClickbaitSystemPrompt(),
+                    'content' => $this->getShortTitleSystemPrompt(),
                 ],
                 [
                     'role' => 'user',

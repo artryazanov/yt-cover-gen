@@ -169,14 +169,14 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
         throw new GeminiResponseException('No image found in Gemini Beta response. Response: '.json_encode($json));
     }
 
-    protected function generateClickbaitTitle(string $gameName, string $videoDescription): string
+    protected function generateShortTitle(string $gameName, string $videoDescription): string
     {
         $payload = [
             'contents' => [
                 [
                     'parts' => [
                         [
-                            'text' => $this->getClickbaitSystemPrompt()."\n\nGame: $gameName\nInput: $videoDescription",
+                            'text' => $this->getShortTitleSystemPrompt()."\n\nGame: $gameName\nInput: $videoDescription",
                         ],
                     ],
                 ],
