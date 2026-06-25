@@ -28,7 +28,8 @@ It leverages powerful AI vision and image editing capabilities (OpenAI Image Mod
     - If `driver` is `gemini`: Falls back to OpenAI if Gemini fails (e.g., content refusal).
 - **Framework Agnostic**: Can be used in any PHP 8.2+ project.
 - **Laravel Integration**: Includes a Service Provider, Facade-friendly architecture, and configuration publishing.
-- **Configurable Models**: Supports various OpenAI models (`gpt-image-1.5`, `gpt-image-1`, `gpt-image-1-mini`) and Gemini models (`gemini-3.1-flash-image-preview`, `gemini-2.5-flash-image`, etc.).
+- **Configurable Models**: Supports various OpenAI models (`gpt-image-2`) and Gemini models (`gemini-3.1-flash-image`, `gemini-3-pro-image`, etc.).
+- **Two-Stage Generation**: Uses a text LLM to generate a punchy, honest clickbait title based on the video description, then uses a vision model to render the final thumbnail.
 - **Smart Image Processing**: Handles image resizing, format conversion, and Base64 encoding/decoding automatically using GD (no external binaries required).
 - **Prompt Engineering**: Built-in, battle-tested prompt templates optimized for high CTR.
 
@@ -71,14 +72,13 @@ composer require artryazanov/yt-cover-gen
 
     # OpenAI Configuration
     OPENAI_API_KEY=sk-...
-    YT_COVER_GEN_OPENAI_MODEL=gpt-image-1.5
+    YT_COVER_GEN_OPENAI_MODEL=gpt-image-2
     YT_COVER_GEN_OPENAI_SIZE=1536x1024
     YT_COVER_GEN_OPENAI_QUALITY=auto
 
-
     # Gemini Configuration
     GEMINI_API_KEY=AIza...
-    YT_COVER_GEN_GEMINI_MODEL=gemini-3.1-flash-image-preview
+    YT_COVER_GEN_GEMINI_MODEL=gemini-3.1-flash-image
     YT_COVER_GEN_GEMINI_ASPECT_RATIO=16:9
     YT_COVER_GEN_GEMINI_RESOLUTION=1K
     ```
@@ -128,7 +128,7 @@ You can use the Factory to create generators with specific configurations on the
 
 ```php
 use Artryazanov\YtCoverGen\CoverGeneratorFactory;
-use Artryazanov\YtCoverGen\Enums\OpenAiModelEnum;
+use Artryazanov\YtCoverGen\Enums\OpenAiImageModelEnum;
 use Artryazanov\YtCoverGen\Enums\OpenAiQualityEnum;
 
 $apiKey = 'your-openai-api-key';
@@ -136,8 +136,9 @@ $apiKey = 'your-openai-api-key';
 $generator = CoverGeneratorFactory::createOpenAi(
     $apiKey,
     '/path/to/output/dir', // Optional output directory
-    OpenAiModelEnum::GPT_IMAGE_1_5->value, // Optional custom model
-    '1024x1024', // Optional custom size
+    OpenAiImageModelEnum::GPT_IMAGE_2->value, // Optional custom image model
+    \Artryazanov\YtCoverGen\Enums\OpenAiTextModelEnum::GPT_5_5->value, // Optional custom text model
+    '1536x1024', // Optional custom size
     OpenAiQualityEnum::HIGH->value // Optional custom quality
 );
 
@@ -150,7 +151,7 @@ Gemini requires PSR-18 HTTP Client dependencies (e.g., Guzzle).
 
 ```php
 use Artryazanov\YtCoverGen\CoverGeneratorFactory;
-use Artryazanov\YtCoverGen\Enums\GeminiModelEnum;
+use Artryazanov\YtCoverGen\Enums\GeminiImageModelEnum;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\HttpFactory;
 
@@ -163,9 +164,10 @@ $generator = CoverGeneratorFactory::createGemini(
     $httpFactory,   // PSR-17 Request Factory
     $httpFactory,   // PSR-17 Stream Factory
     '/path/to/output/dir',
-    GeminiModelEnum::GEMINI_3_1_FLASH_IMAGE_PREVIEW->value, // Optional custom model
+    GeminiImageModelEnum::GEMINI_3_1_FLASH_IMAGE->value, // Optional custom image model
+    \Artryazanov\YtCoverGen\Enums\GeminiTextModelEnum::GEMINI_3_1_PRO_PREVIEW->value, // Optional custom text model
     '16:9',         // Optional custom aspect ratio
-    '2K'            // Optional custom resolution
+    '1K'            // Optional custom resolution
 );
 
 $path = $generator->generate('screenshot.jpg', 'My Game', 'Awesome Video');
@@ -174,16 +176,19 @@ $path = $generator->generate('screenshot.jpg', 'My Game', 'Awesome Video');
 ## Supported Models
 
 ### OpenAI Models
-The package includes an Enum `Artryazanov\YtCoverGen\Enums\OpenAiModelEnum` for easy reference:
-- `gpt-image-1.5` (Default)
-- `gpt-image-1`
-- `gpt-image-1-mini`
+The package includes an Enum `Artryazanov\YtCoverGen\Enums\OpenAiImageModelEnum` for easy reference:
+- `gpt-image-2` (Default)
+
+The package also includes an Enum `Artryazanov\YtCoverGen\Enums\OpenAiTextModelEnum` for text generation:
+- `gpt-5.5`
 
 ### Gemini Models
-The package includes an Enum `Artryazanov\YtCoverGen\Enums\GeminiModelEnum`:
-- `gemini-3.1-flash-image-preview` (Default)
-- `gemini-3-pro-image-preview`
-- `gemini-2.5-flash-image`
+The package includes an Enum `Artryazanov\YtCoverGen\Enums\GeminiImageModelEnum`:
+- `gemini-3.1-flash-image` (Default)
+- `gemini-3-pro-image`
+
+The package also includes an Enum `Artryazanov\YtCoverGen\Enums\GeminiTextModelEnum` for text generation:
+- `gemini-3.1-pro-preview`
 
 ## Testing
 

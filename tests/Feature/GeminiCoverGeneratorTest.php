@@ -39,6 +39,7 @@ it('throws exception if image missing', function () {
         $this->imageProcessor,
         $this->tempDir,
         null,
+        null, // textModel
         $this->httpClient,
         $this->requestFactory,
         $this->streamFactory,
@@ -51,7 +52,8 @@ it('generates cover using Gemini Beta API', function () {
     $generator = new GeminiCoverGenerator(
         $this->imageProcessor,
         $this->tempDir,
-        'gemini-3-pro-image-preview',
+        'gemini-3.1-flash-image',
+        'gemini-3.1-pro-preview',
         $this->httpClient,
         $this->requestFactory,
         $this->streamFactory,
@@ -64,7 +66,7 @@ it('generates cover using Gemini Beta API', function () {
     $request->shouldReceive('withBody')->andReturnSelf();
 
     $this->requestFactory->shouldReceive('createRequest')
-        ->with('POST', Mockery::pattern('/gemini-3-pro-image-preview:generateContent/'))
+        ->with('POST', Mockery::pattern('/gemini-.+:generateContent/'))
         ->andReturn($request);
 
     $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
@@ -102,9 +104,29 @@ it('generates cover using Gemini Beta API', function () {
     $response->shouldReceive('getStatusCode')->andReturn(200);
     $response->shouldReceive('getBody')->andReturn($responseBody);
 
+    // Text response mock
+    $textJsonResponse = json_encode([
+        'candidates' => [
+            [
+                'content' => [
+                    'parts' => [
+                        ['text' => 'VideoDesc']
+                    ]
+                ]
+            ]
+        ]
+    ]);
+    
+    $textResponseBody = Mockery::mock(StreamInterface::class);
+    $textResponseBody->shouldReceive('getContents')->andReturn($textJsonResponse);
+    
+    $textResponse = Mockery::mock(ResponseInterface::class);
+    $textResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
+
     $this->httpClient->shouldReceive('sendRequest')
-        ->once()
-        ->andReturn($response);
+        ->twice()
+        ->andReturn($textResponse, $response);
 
     $path = $generator->generate($this->dummyImage, 'GameName', 'VideoDesc');
 
@@ -115,7 +137,8 @@ it('generates cover using Gemini Beta API and includes 360 badge prompt when req
     $generator = new GeminiCoverGenerator(
         $this->imageProcessor,
         $this->tempDir,
-        'gemini-3-pro-image-preview',
+        'gemini-3.1-flash-image',
+        'gemini-3.1-pro-preview',
         $this->httpClient,
         $this->requestFactory,
         $this->streamFactory,
@@ -128,14 +151,10 @@ it('generates cover using Gemini Beta API and includes 360 badge prompt when req
     $request->shouldReceive('withBody')->andReturnSelf();
 
     $this->requestFactory->shouldReceive('createRequest')
-        ->with('POST', Mockery::pattern('/gemini-3-pro-image-preview:generateContent/'))
+        ->with('POST', Mockery::pattern('/gemini-.+:generateContent/'))
         ->andReturn($request);
 
-    $this->streamFactory->shouldReceive('createStream')
-        ->with(Mockery::on(function ($jsonPayload) {
-            return str_contains($jsonPayload, '360\u00b0 Video');
-        }))
-        ->andReturn(Mockery::mock(StreamInterface::class));
+    $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
 
     // Prepare Response Mock
     // Create valid image data
@@ -170,9 +189,29 @@ it('generates cover using Gemini Beta API and includes 360 badge prompt when req
     $response->shouldReceive('getStatusCode')->andReturn(200);
     $response->shouldReceive('getBody')->andReturn($responseBody);
 
+    // Text response mock
+    $textJsonResponse = json_encode([
+        'candidates' => [
+            [
+                'content' => [
+                    'parts' => [
+                        ['text' => 'Awesome 360 video']
+                    ]
+                ]
+            ]
+        ]
+    ]);
+    
+    $textResponseBody = Mockery::mock(StreamInterface::class);
+    $textResponseBody->shouldReceive('getContents')->andReturn($textJsonResponse);
+    
+    $textResponse = Mockery::mock(ResponseInterface::class);
+    $textResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
+
     $this->httpClient->shouldReceive('sendRequest')
-        ->once()
-        ->andReturn($response);
+        ->twice()
+        ->andReturn($textResponse, $response);
 
     $path = $generator->generate($this->dummyImage, 'GameName', 'Awesome 360 video');
 

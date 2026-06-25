@@ -5,6 +5,7 @@ use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use OpenAI\Contracts\ClientContract;
 use OpenAI\Contracts\Resources\ImagesContract;
 use OpenAI\Responses\Images\EditResponse;
+use OpenAI\Responses\Chat\CreateResponse;
 
 beforeEach(function () {
     // Debug info
@@ -67,10 +68,23 @@ it('generates cover using OpenAI', function () {
         ],
     ]);
 
+    $chatMock = Mockery::mock(\OpenAI\Contracts\Resources\ChatContract::class);
+    $chatResponseMock = CreateResponse::fake([
+        'choices' => [
+            [
+                'message' => [
+                    'content' => 'Description'
+                ]
+            ]
+        ]
+    ]);
+    $chatMock->shouldReceive('create')->once()->andReturn($chatResponseMock);
+    $this->client->allows()->chat()->andReturn($chatMock);
+
     $this->images->shouldReceive('edit')
         ->once()
         ->with(Mockery::on(function ($args) {
-            return $args['model'] === 'gpt-image-1.5'
+            return $args['model'] === 'gpt-image-2'
                && is_resource($args['image'])
                && str_contains($args['prompt'], 'Create a viral YouTube thumbnail')
                && $args['size'] === '1536x1024'
@@ -102,10 +116,23 @@ it('generates cover using OpenAI and includes 360 badge prompt when requested', 
         ],
     ]);
 
+    $chatMock = Mockery::mock(\OpenAI\Contracts\Resources\ChatContract::class);
+    $chatResponseMock = CreateResponse::fake([
+        'choices' => [
+            [
+                'message' => [
+                    'content' => 'Awesome 360 video'
+                ]
+            ]
+        ]
+    ]);
+    $chatMock->shouldReceive('create')->once()->andReturn($chatResponseMock);
+    $this->client->allows()->chat()->andReturn($chatMock);
+
     $this->images->shouldReceive('edit')
         ->once()
         ->with(Mockery::on(function ($args) {
-            return $args['model'] === 'gpt-image-1.5'
+            return $args['model'] === 'gpt-image-2'
                && is_resource($args['image'])
                && str_contains($args['prompt'], 'Create a viral YouTube thumbnail')
                && str_contains($args['prompt'], '360° Video')

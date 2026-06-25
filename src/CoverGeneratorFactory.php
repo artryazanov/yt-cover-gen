@@ -16,13 +16,14 @@ class CoverGeneratorFactory
         string $apiKey,
         ?string $outputPath = null,
         ?string $model = null,
+        ?string $textModel = null,
         ?string $size = null,
         ?string $quality = null
     ): OpenAiCoverGenerator {
         $client = OpenAI::client($apiKey);
         $imageProcessor = new ImageProcessor;
 
-        return new OpenAiCoverGenerator($client, $imageProcessor, $outputPath ?? sys_get_temp_dir(), $model, $size, $quality);
+        return new OpenAiCoverGenerator($client, $imageProcessor, $outputPath ?? sys_get_temp_dir(), $model, $textModel, $size, $quality);
     }
 
     public static function createGemini(
@@ -32,6 +33,7 @@ class CoverGeneratorFactory
         StreamFactoryInterface $streamFactory,
         ?string $outputPath = null,
         ?string $model = null,
+        ?string $textModel = null,
         ?string $aspectRatio = null,
         ?string $resolution = null
     ): GeminiCoverGenerator {
@@ -41,6 +43,7 @@ class CoverGeneratorFactory
             $imageProcessor,
             $outputPath ?? sys_get_temp_dir(),
             $model,
+            $textModel,
             $httpClient,
             $requestFactory,
             $streamFactory,

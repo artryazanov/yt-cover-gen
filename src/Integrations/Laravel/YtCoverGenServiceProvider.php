@@ -40,6 +40,7 @@ class YtCoverGenServiceProvider extends ServiceProvider
                     $config['drivers']['openai']['api_key'],
                     $outputPath,
                     $config['drivers']['openai']['model'] ?? null,
+                    $config['drivers']['openai']['text_model'] ?? null,
                     $config['drivers']['openai']['size'] ?? null,
                     $config['drivers']['openai']['quality'] ?? null
                 );
@@ -58,6 +59,7 @@ class YtCoverGenServiceProvider extends ServiceProvider
                     $streamFactory,
                     $outputPath,
                     $config['drivers']['gemini']['model'] ?? null,
+                    $config['drivers']['gemini']['text_model'] ?? null,
                     $config['drivers']['gemini']['aspect_ratio'] ?? null,
                     $config['drivers']['gemini']['resolution'] ?? null
                 );
