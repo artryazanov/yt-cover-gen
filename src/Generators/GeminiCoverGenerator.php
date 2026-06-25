@@ -60,7 +60,7 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         $this->resolution = $resolution ?: getenv('YT_COVER_GEN_GEMINI_RESOLUTION') ?: GeminiResolutionEnum::RES_1K->value;
     }
 
-    public function generate(string $imagePath, string $gameName, string $videoDescription): string
+    public function generate(string $imagePath, string $gameName, string $videoDescription, ?string $gameCoverPath = null): string
     {
         if (! file_exists($imagePath)) {
             throw new RuntimeException("Image file not found: $imagePath");
@@ -71,12 +71,12 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         }
 
         $clickbaitTitle = $this->generateClickbaitTitle($gameName, $videoDescription);
-        $prompt = $this->buildPrompt($gameName, $clickbaitTitle);
+        $prompt = $this->buildPrompt($gameName, $clickbaitTitle, $gameCoverPath);
 
-        return $this->generateWithRawBetaApi($imagePath, $prompt);
+        return $this->generateWithRawBetaApi($imagePath, $prompt, $gameCoverPath);
     }
 
-    private function generateWithRawBetaApi(string $imagePath, string $prompt): string
+    private function generateWithRawBetaApi(string $imagePath, string $prompt, ?string $gameCoverPath = null): string
     {
         $imageBase64 = $this->imageProcessor->imageToBase64($imagePath);
 
@@ -91,20 +91,45 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
             $mimeType = 'image/webp';
         }
 
+        $parts = [
+            [
+                'text' => $prompt,
+            ],
+            [
+                'inline_data' => [
+                    'mime_type' => $mimeType,
+                    'data' => $imageBase64,
+                ],
+            ],
+        ];
+
+        if ($gameCoverPath && file_exists($gameCoverPath)) {
+            $coverBase64 = $this->imageProcessor->imageToBase64($gameCoverPath);
+            $coverMimeType = 'image/jpeg';
+            $coverExtension = strtolower(pathinfo($gameCoverPath, PATHINFO_EXTENSION));
+            if ($coverExtension === 'png') {
+                $coverMimeType = 'image/png';
+            } elseif ($coverExtension === 'gif') {
+                $coverMimeType = 'image/gif';
+            } elseif ($coverExtension === 'webp') {
+                $coverMimeType = 'image/webp';
+            }
+
+            $parts[] = [
+                'text' => "Here is the official game cover image. Use the logo from this second image as an EXACT reference for drawing the game logo in the thumbnail:",
+            ];
+            $parts[] = [
+                'inline_data' => [
+                    'mime_type' => $coverMimeType,
+                    'data' => $coverBase64,
+                ],
+            ];
+        }
+
         $payload = [
             'contents' => [
                 [
-                    'parts' => [
-                        [
-                            'text' => $prompt,
-                        ],
-                        [
-                            'inline_data' => [
-                                'mime_type' => $mimeType,
-                                'data' => $imageBase64,
-                            ],
-                        ],
-                    ],
+                    'parts' => $parts,
                 ],
             ],
             'generationConfig' => [
@@ -201,7 +226,7 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         return trim(trim($title, '"\' '));
     }
 
-    private function buildPrompt(string $gameName, string $generatedTitle): string
+    private function buildPrompt(string $gameName, string $generatedTitle, ?string $gameCoverPath = null): string
     {
         $is360 = preg_match('/\b360\b|360°|panoram|панорам/ui', $generatedTitle);
 
@@ -215,6 +240,10 @@ class GeminiCoverGenerator implements CoverGeneratorInterface
         $prompt .= "Text & Branding:\r\n";
         $prompt .= "    1. HEADLINE: Render EXACTLY this text: \"$generatedTitle\". Do not change a single letter. Make the text MASSIVE and DOMINANT.\r\n";
         $prompt .= "    2. LOGO: Integrate the official \"$gameName\" logo in one corner. Make the logo OVERSIZED.\r\n";
+
+        if ($gameCoverPath) {
+            $prompt .= "       IMPORTANT: I have provided a second image which is the official game cover. Use the logo from that second image as the EXACT reference for drawing the logo.\r\n";
+        }
 
         if ($is360) {
             $prompt .= "    3. BADGE: Add a prominent and recognizable '360° Video' logo so users immediately know it's a panoramic video.\r\n";

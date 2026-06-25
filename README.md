@@ -30,6 +30,7 @@ It leverages powerful AI vision and image editing capabilities (OpenAI Image Mod
 - **Laravel Integration**: Includes a Service Provider, Facade-friendly architecture, and configuration publishing.
 - **Configurable Models**: Supports various OpenAI models (`gpt-image-2`) and Gemini models (`gemini-3.1-flash-image`, `gemini-3-pro-image`, etc.).
 - **Two-Stage Generation**: Uses a text LLM to generate a punchy, honest clickbait title based on the video description, then uses a vision model to render the final thumbnail.
+- **Game Logo Reference**: Optionally pass an official game cover to accurately reproduce the game's logo in the thumbnail (currently supported by Gemini).
 - **Smart Image Processing**: Handles image resizing, format conversion, and Base64 encoding/decoding automatically using GD (no external binaries required).
 - **Prompt Engineering**: Built-in, battle-tested prompt templates optimized for high CTR.
 
@@ -107,12 +108,14 @@ class CreateThumbnail
         $pathToScreenshot = '/path/to/screenshot.jpg';
         $gameName = 'Elden Ring';
         $videoTitle = 'NO HIT RUN PART 1';
+        $gameCover = '/path/to/official_cover.png'; // Optional: for accurate logo generation
 
         // Returns absolute path to the generated image
         $coverPath = $this->generator->generate(
             $pathToScreenshot, 
             $gameName, 
-            $videoTitle
+            $videoTitle,
+            $gameCover
         );
         
         echo "Thumbnail generated at: $coverPath";
@@ -142,7 +145,7 @@ $generator = CoverGeneratorFactory::createOpenAi(
     OpenAiQualityEnum::HIGH->value // Optional custom quality
 );
 
-$path = $generator->generate('screenshot.jpg', 'My Game', 'Awesome Video');
+$path = $generator->generate('screenshot.jpg', 'My Game', 'Awesome Video', 'cover.jpg');
 ```
 
 #### Google Gemini Example
@@ -170,7 +173,7 @@ $generator = CoverGeneratorFactory::createGemini(
     '1K'            // Optional custom resolution
 );
 
-$path = $generator->generate('screenshot.jpg', 'My Game', 'Awesome Video');
+$path = $generator->generate('screenshot.jpg', 'My Game', 'Awesome Video', 'cover.jpg');
 ```
 
 ## Supported Models

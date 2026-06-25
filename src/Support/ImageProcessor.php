@@ -85,7 +85,7 @@ class ImageProcessor
      */
     public function imageToBase64(string $path): string
     {
-        $data = file_get_contents($path);
+        $data = @file_get_contents($path);
         if ($data === false) {
             throw new RuntimeException("Failed to read image: $path");
         }

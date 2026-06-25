@@ -6,7 +6,7 @@ use Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator;
 
 it('generates cover using primary generator', function () {
     $primary = Mockery::mock(CoverGeneratorInterface::class);
-    $primary->shouldReceive('generate')->once()->with('img.jpg', 'Game', 'Desc')->andReturn('primary.jpg');
+    $primary->shouldReceive('generate')->once()->with('img.jpg', 'Game', 'Desc', null)->andReturn('primary.jpg');
 
     $fallback = Mockery::mock(CoverGeneratorInterface::class);
     $fallback->shouldNotReceive('generate');
@@ -22,7 +22,7 @@ it('falls back if primary fails with GeminiResponseException', function () {
     $primary->shouldReceive('generate')->once()->andThrow(new GeminiResponseException('Blocked'));
 
     $fallback = Mockery::mock(CoverGeneratorInterface::class);
-    $fallback->shouldReceive('generate')->once()->with('img.jpg', 'Game', 'Desc')->andReturn('fallback.jpg');
+    $fallback->shouldReceive('generate')->once()->with('img.jpg', 'Game', 'Desc', null)->andReturn('fallback.jpg');
 
     $generator = new FallbackCoverGenerator($primary, $fallback);
     $result = $generator->generate('img.jpg', 'Game', 'Desc');
@@ -35,7 +35,7 @@ it('falls back if primary fails with generic Exception', function () {
     $primary->shouldReceive('generate')->once()->andThrow(new RuntimeException('Error'));
 
     $fallback = Mockery::mock(CoverGeneratorInterface::class);
-    $fallback->shouldReceive('generate')->once()->with('img.jpg', 'Game', 'Desc')->andReturn('fallback.jpg');
+    $fallback->shouldReceive('generate')->once()->with('img.jpg', 'Game', 'Desc', null)->andReturn('fallback.jpg');
 
     $generator = new FallbackCoverGenerator($primary, $fallback);
     $result = $generator->generate('img.jpg', 'Game', 'Desc');

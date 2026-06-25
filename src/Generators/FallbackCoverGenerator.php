@@ -25,10 +25,10 @@ class FallbackCoverGenerator implements CoverGeneratorInterface
         $this->errorHandler = $errorHandler;
     }
 
-    public function generate(string $imagePath, string $gameName, string $videoDescription): string
+    public function generate(string $imagePath, string $gameName, string $videoDescription, ?string $gameCoverPath = null): string
     {
         try {
-            return $this->primary->generate($imagePath, $gameName, $videoDescription);
+            return $this->primary->generate($imagePath, $gameName, $videoDescription, $gameCoverPath);
         } catch (GeminiResponseException $e) {
             // Force fallback for Gemini response errors, ignoring error handler re-throws if necessary
             if ($this->errorHandler) {
@@ -44,6 +44,6 @@ class FallbackCoverGenerator implements CoverGeneratorInterface
             }
         }
 
-        return $this->fallback->generate($imagePath, $gameName, $videoDescription);
+        return $this->fallback->generate($imagePath, $gameName, $videoDescription, $gameCoverPath);
     }
 }

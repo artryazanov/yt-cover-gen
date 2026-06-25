@@ -49,7 +49,7 @@ class OpenAiCoverGenerator implements CoverGeneratorInterface
         $this->quality = $quality ?: getenv('YT_COVER_GEN_OPENAI_QUALITY') ?: OpenAiQualityEnum::AUTO->value;
     }
 
-    public function generate(string $imagePath, string $gameName, string $videoDescription): string
+    public function generate(string $imagePath, string $gameName, string $videoDescription, ?string $gameCoverPath = null): string
     {
         if (! file_exists($imagePath)) {
             throw new RuntimeException("Image file not found: $imagePath");
