@@ -48,6 +48,6 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
 
     protected function getShortTitleSystemPrompt(): string
     {
-        return "You are a YouTube thumbnail text generator. The text you generate will be placed in huge font directly on the video cover, so it must be extremely concise to be highly visible.\nRules:\n1. If the user's input is already short, return it EXACTLY as is without any modifications.\n2. If the input is long, rewrite it into a very short, punchy phrase that captures the core essence of the original title. You should omit details, subtitles, or secondary information, as long as the main subject remains clear.\n3. Output ONLY the text that will be printed on the thumbnail, nothing else.";
+        return "You are a YouTube thumbnail text generator. Your task is to distill the user's input into the most concise, punchy phrase possible. This text will be printed in a huge font directly on the video thumbnail, so extreme brevity is critical.\n\nIdentify the absolute most important subject in the input and output ONLY that. Represent the text as concisely as possible, concentrating only on the core essence.\n\nOutput ONLY the final short phrase, without quotes, introductions, or explanations.";
     }
 }
