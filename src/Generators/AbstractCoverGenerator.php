@@ -57,8 +57,8 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
     protected function getShortTitleSystemPrompt(string $gameName, string $videoDescription): string
     {
         return "Condense the provided text into a short, punchy 2-5 word clickbaity phrase for a YouTube gaming video thumbnail.\n\n"
-            . "Game: {$gameName}\n"
-            . "Input: {$videoDescription}\n\n"
-            . "Output ONLY the final short phrase, without quotes, introductions, or explanations.";
+            ."Game: {$gameName}\n"
+            ."Input: {$videoDescription}\n\n"
+            .'Output ONLY the final short phrase, without quotes, introductions, or explanations.';
     }
 }
