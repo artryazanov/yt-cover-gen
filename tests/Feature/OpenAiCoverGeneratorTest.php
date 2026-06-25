@@ -3,6 +3,7 @@
 use Artryazanov\YtCoverGen\Generators\OpenAiCoverGenerator;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use OpenAI\Contracts\ClientContract;
+use OpenAI\Contracts\Resources\ChatContract;
 use OpenAI\Contracts\Resources\ImagesContract;
 use OpenAI\Responses\Chat\CreateResponse;
 use OpenAI\Responses\Images\EditResponse;
@@ -68,7 +69,7 @@ it('generates cover using OpenAI', function () {
         ],
     ]);
 
-    $chatMock = Mockery::mock(\OpenAI\Contracts\Resources\ChatContract::class);
+    $chatMock = Mockery::mock(ChatContract::class);
     $chatResponseMock = CreateResponse::fake([
         'choices' => [
             [
@@ -116,7 +117,7 @@ it('generates cover using OpenAI and includes 360 badge prompt when requested', 
         ],
     ]);
 
-    $chatMock = Mockery::mock(\OpenAI\Contracts\Resources\ChatContract::class);
+    $chatMock = Mockery::mock(ChatContract::class);
     $chatResponseMock = CreateResponse::fake([
         'choices' => [
             [
