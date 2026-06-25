@@ -34,7 +34,13 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
             throw new RuntimeException("Image file not found: $imagePath");
         }
 
-        $shortTitle = $this->generateShortTitle($gameName, $videoDescription);
+        $wordCount = count(preg_split('/\s+/u', trim($videoDescription), -1, PREG_SPLIT_NO_EMPTY));
+        if ($wordCount <= 5) {
+            $shortTitle = $videoDescription;
+        } else {
+            $shortTitle = $this->generateShortTitle($gameName, $videoDescription);
+        }
+
         $prompt = $this->buildPrompt($gameName, $shortTitle, $gameCoverPath);
 
         return $this->doGenerate($imagePath, $prompt, $gameCoverPath);
@@ -48,6 +54,6 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
 
     protected function getShortTitleSystemPrompt(): string
     {
-        return "You are a YouTube thumbnail text generator. Your task is to distill the user's input into the most concise, punchy phrase possible. This text will be printed in a huge font directly on the video thumbnail, so extreme brevity is critical.\n\nIdentify the absolute most important subject in the input and output ONLY that. Represent the text as concisely as possible, concentrating only on the core essence.\n\nOutput ONLY the final short phrase, without quotes, introductions, or explanations.";
+        return "Condense the provided text into a short, punchy 2-5 word clickbaity phrase for a YouTube thumbnail.\n\nOutput ONLY the final short phrase, without quotes, introductions, or explanations.";
     }
 }

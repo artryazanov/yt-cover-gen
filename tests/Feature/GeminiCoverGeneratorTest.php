@@ -110,7 +110,7 @@ it('generates cover using Gemini Beta API', function () {
             [
                 'content' => [
                     'parts' => [
-                        ['text' => 'VideoDesc'],
+                        ['text' => 'This is a very long description'],
                     ],
                 ],
             ],
@@ -128,7 +128,7 @@ it('generates cover using Gemini Beta API', function () {
         ->twice()
         ->andReturn($textResponse, $response);
 
-    $path = $generator->generate($this->dummyImage, 'GameName', 'VideoDesc');
+    $path = $generator->generate($this->dummyImage, 'GameName', 'This is a very long description');
 
     expect(file_exists($path))->toBeTrue();
 });
@@ -195,7 +195,7 @@ it('generates cover using Gemini Beta API and includes 360 badge prompt when req
             [
                 'content' => [
                     'parts' => [
-                        ['text' => 'Awesome 360 video'],
+                        ['text' => 'Awesome 360 video with a lot of words'],
                     ],
                 ],
             ],
@@ -213,7 +213,7 @@ it('generates cover using Gemini Beta API and includes 360 badge prompt when req
         ->twice()
         ->andReturn($textResponse, $response);
 
-    $path = $generator->generate($this->dummyImage, 'GameName', 'Awesome 360 video');
+    $path = $generator->generate($this->dummyImage, 'GameName', 'Awesome 360 video with a lot of words');
 
     expect(file_exists($path))->toBeTrue();
 });
@@ -299,7 +299,7 @@ it('generates cover using Gemini Beta API with game cover reference', function (
             [
                 'content' => [
                     'parts' => [
-                        ['text' => 'VideoDesc'],
+                        ['text' => 'This is a very long description'],
                     ],
                 ],
             ],
@@ -317,7 +317,7 @@ it('generates cover using Gemini Beta API with game cover reference', function (
         ->twice()
         ->andReturn($textResponse, $response);
 
-    $path = $generator->generate($this->dummyImage, 'GameName', 'VideoDesc', $gameCoverPath);
+    $path = $generator->generate($this->dummyImage, 'GameName', 'This is a very long description', $gameCoverPath);
 
     expect(file_exists($path))->toBeTrue();
 });
@@ -390,7 +390,7 @@ it('handles gif and webp extensions and handles clickbait error', function () {
         ->twice()
         ->andReturn($textResponse, $response);
 
-    $path = $generator->generate($gifImage, 'GameName', 'VideoDesc', $webpCover);
+    $path = $generator->generate($gifImage, 'GameName', 'This is a very long description', $webpCover);
 
     expect(file_exists($path))->toBeTrue();
 });

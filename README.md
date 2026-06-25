@@ -29,7 +29,7 @@ It leverages powerful AI vision and image editing capabilities (OpenAI Image Mod
 - **Framework Agnostic**: Can be used in any PHP 8.2+ project.
 - **Laravel Integration**: Includes a Service Provider, Facade-friendly architecture, and configuration publishing.
 - **Configurable Models**: Supports various OpenAI models (`gpt-image-2`) and Gemini models (`gemini-3.1-flash-image`, `gemini-3-pro-image`, etc.).
-- **Two-Stage Generation**: Uses a text LLM to analyze the input video title or description and generate an extremely concise, punchy text for maximum visibility, then uses a vision model to render the final thumbnail.
+- **Smart Text Generation**: If the input title is short (<= 5 words), it is used directly to save API tokens and time. If it is longer, a text LLM condenses it into a short, punchy 2-5 word clickbait phrase. Then a vision model renders the final thumbnail.
 - **Game Logo Reference**: Optionally pass an official game cover to accurately reproduce the game's logo in the thumbnail (currently supported by Gemini).
 - **Smart Image Processing**: Handles image resizing, format conversion, and Base64 encoding/decoding automatically using GD (no external binaries required).
 - **Prompt Engineering**: Built-in, battle-tested prompt templates optimized for high CTR.

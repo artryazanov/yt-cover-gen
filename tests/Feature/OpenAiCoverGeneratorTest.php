@@ -74,7 +74,7 @@ it('generates cover using OpenAI', function () {
         'choices' => [
             [
                 'message' => [
-                    'content' => 'Description',
+                    'content' => 'This is a very long description',
                 ],
             ],
         ],
@@ -93,7 +93,7 @@ it('generates cover using OpenAI', function () {
         }))
         ->andReturn($mockResponse);
 
-    $path = $generator->generate($this->dummyImage, 'Game Name', 'Description');
+    $path = $generator->generate($this->dummyImage, 'Game Name', 'This is a very long description');
 
     expect($path)->toBeString();
     expect(file_exists($path))->toBeTrue();
@@ -122,7 +122,7 @@ it('generates cover using OpenAI and includes 360 badge prompt when requested', 
         'choices' => [
             [
                 'message' => [
-                    'content' => 'Awesome 360 video',
+                    'content' => 'Awesome 360 video with a lot of words',
                 ],
             ],
         ],
@@ -142,7 +142,7 @@ it('generates cover using OpenAI and includes 360 badge prompt when requested', 
         }))
         ->andReturn($mockResponse);
 
-    $path = $generator->generate($this->dummyImage, 'Game Name', 'Awesome 360 video');
+    $path = $generator->generate($this->dummyImage, 'Game Name', 'Awesome 360 video with a lot of words');
 
     expect($path)->toBeString();
     expect(file_exists($path))->toBeTrue();
