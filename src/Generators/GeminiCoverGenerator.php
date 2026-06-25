@@ -176,7 +176,7 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
                 [
                     'parts' => [
                         [
-                            'text' => $this->getClickbaitSystemPrompt() . "\n\nGame: $gameName\nInput: $videoDescription",
+                            'text' => $this->getClickbaitSystemPrompt()."\n\nGame: $gameName\nInput: $videoDescription",
                         ],
                     ],
                 ],
