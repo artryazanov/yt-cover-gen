@@ -80,7 +80,7 @@ class OpenAiCoverGenerator extends AbstractCoverGenerator
                     'content' => "Game: $gameName\nInput: $videoDescription",
                 ],
             ],
-            'max_tokens' => 20,
+            'max_completion_tokens' => 20,
             'temperature' => 0.7,
         ]);
 
