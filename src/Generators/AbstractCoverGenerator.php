@@ -78,7 +78,7 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
         $logosDir = rtrim($this->outputPath, '/').'/logos';
 
         if (! is_dir($logosDir)) {
-            mkdir($logosDir, 0755, true);
+            mkdir($logosDir, 0775, true);
         }
 
         $cachePath = $logosDir.'/'.$hash.'.jpg';

@@ -68,7 +68,7 @@ class ImageProcessor
 
         // Ensure directory exists
         if (! is_dir($outputPath)) {
-            mkdir($outputPath, 0755, true);
+            mkdir($outputPath, 0775, true);
         }
 
         $fullPath = rtrim($outputPath, '/').'/'.$filename;
@@ -76,6 +76,8 @@ class ImageProcessor
         if (file_put_contents($fullPath, $resultData) === false) {
             throw new RuntimeException("Failed to save image to {$fullPath}");
         }
+
+        @chmod($fullPath, 0664);
 
         return $fullPath;
     }
@@ -106,7 +108,7 @@ class ImageProcessor
         }
 
         if (! is_dir($outputPath)) {
-            mkdir($outputPath, 0755, true);
+            mkdir($outputPath, 0775, true);
         }
 
         $fullPath = rtrim($outputPath, '/').'/'.$filename;
@@ -114,6 +116,8 @@ class ImageProcessor
         if (file_put_contents($fullPath, $resultData) === false) {
             throw new RuntimeException("Failed to save image to {$fullPath}");
         }
+
+        @chmod($fullPath, 0664);
 
         return $fullPath;
     }
