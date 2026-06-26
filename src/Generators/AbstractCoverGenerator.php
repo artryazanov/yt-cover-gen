@@ -76,7 +76,7 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
 
         $hash = md5_file($originalLogoPath);
         $logosDir = rtrim($this->outputPath, '/').'/logos';
-        
+
         if (! is_dir($logosDir)) {
             mkdir($logosDir, 0755, true);
         }
