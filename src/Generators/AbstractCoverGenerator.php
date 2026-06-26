@@ -43,6 +43,10 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
             $shortTitle = $this->generateShortTitle($gameName, $videoDescription);
         }
 
+        if ($gameCoverPath) {
+            $gameCoverPath = $this->getCleanLogo($gameCoverPath);
+        }
+
         $prompt = $this->buildPrompt($gameName, $shortTitle, $videoDescription, $gameCoverPath);
 
         return $this->doGenerate($imagePath, $prompt, $gameCoverPath);
@@ -60,5 +64,29 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
             ."Game: {$gameName}\n"
             ."Input: {$videoDescription}\n\n"
             .'Output ONLY the final short phrase, without quotes, introductions, or explanations.';
+    }
+
+    abstract protected function generateCleanLogo(string $originalLogoPath, string $cachePath): string;
+
+    protected function getCleanLogo(string $originalLogoPath): string
+    {
+        if (! file_exists($originalLogoPath)) {
+            return $originalLogoPath;
+        }
+
+        $hash = md5_file($originalLogoPath);
+        $logosDir = rtrim($this->outputPath, '/').'/logos';
+        
+        if (! is_dir($logosDir)) {
+            mkdir($logosDir, 0755, true);
+        }
+
+        $cachePath = $logosDir.'/'.$hash.'.jpg';
+
+        if (file_exists($cachePath)) {
+            return $cachePath;
+        }
+
+        return $this->generateCleanLogo($originalLogoPath, $cachePath);
     }
 }

@@ -36,6 +36,10 @@ beforeEach(function () {
 
 afterEach(function () {
     if (isset($this->tempDir) && is_dir($this->tempDir)) {
+        if (is_dir($this->tempDir.'/logos')) {
+            array_map('unlink', glob($this->tempDir.'/logos/*'));
+            rmdir($this->tempDir.'/logos');
+        }
         $files = glob($this->tempDir.'/*');
         foreach ($files as $file) {
             if (is_file($file)) {

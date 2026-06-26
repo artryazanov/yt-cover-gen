@@ -106,4 +106,14 @@ class OpenAiCoverGenerator extends AbstractCoverGenerator
 
         return $prompt;
     }
+
+    protected function generateCleanLogo(string $originalLogoPath, string $cachePath): string
+    {
+        // For OpenAI we skip redrawing as DALL-E 3 doesn't support direct image-to-image without masking.
+        // Copy the original image to cache or just return the original path.
+        // We will just copy it to cache so it behaves consistently.
+        copy($originalLogoPath, $cachePath);
+
+        return $cachePath;
+    }
 }

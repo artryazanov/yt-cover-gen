@@ -239,4 +239,68 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
 
         return $prompt;
     }
+
+    protected function generateCleanLogo(string $originalLogoPath, string $cachePath): string
+    {
+        if (! $this->httpClient || ! $this->apiKey) {
+            throw new RuntimeException('PSR Client and API Key required for Gemini models.');
+        }
+
+        $imageBase64 = $this->imageProcessor->imageToBase64($originalLogoPath);
+        $mimeType = $this->imageProcessor->getMimeType($originalLogoPath);
+
+        $prompt = 'Extract ONLY the game logo from the provided image. Draw the exact same logo on a solid black background. Do not add any other elements, characters, or text.';
+
+        $parts = [
+            [
+                'text' => $prompt,
+            ],
+            [
+                'inline_data' => [
+                    'mime_type' => $mimeType,
+                    'data' => $imageBase64,
+                ],
+            ],
+        ];
+
+        $payload = [
+            'contents' => [
+                [
+                    'parts' => $parts,
+                ],
+            ],
+            'generationConfig' => [
+                'responseModalities' => ['IMAGE'],
+            ],
+        ];
+
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}";
+
+        $request = $this->requestFactory->createRequest('POST', $url)
+            ->withHeader('Content-Type', 'application/json');
+
+        $body = $this->streamFactory->createStream(json_encode($payload));
+        $request = $request->withBody($body);
+
+        $response = $this->httpClient->sendRequest($request);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new GeminiResponseException('Gemini API Error (Logo Extraction): '.$response->getBody()->getContents());
+        }
+
+        $json = json_decode($response->getBody()->getContents(), true);
+
+        foreach ($json['candidates'][0]['content']['parts'] ?? [] as $part) {
+            if (isset($part['inlineData']['data'])) {
+                $imageData = base64_decode($part['inlineData']['data']);
+
+                $dir = dirname($cachePath);
+                $filename = basename($cachePath);
+
+                return $this->imageProcessor->processAndSave($imageData, $dir, $filename);
+            }
+        }
+
+        throw new GeminiResponseException('No image found in Gemini Beta response during logo extraction. Response: '.json_encode($json));
+    }
 }

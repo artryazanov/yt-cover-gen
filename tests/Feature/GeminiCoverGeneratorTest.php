@@ -25,6 +25,10 @@ beforeEach(function () {
 });
 
 afterEach(function () {
+    if (is_dir($this->tempDir.'/logos')) {
+        array_map('unlink', glob($this->tempDir.'/logos/*'));
+        rmdir($this->tempDir.'/logos');
+    }
     $files = glob($this->tempDir.'/*');
     foreach ($files as $file) {
         if (is_file($file)) {
@@ -314,8 +318,8 @@ it('generates cover using Gemini Beta API with game cover reference', function (
     $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
 
     $this->httpClient->shouldReceive('sendRequest')
-        ->twice()
-        ->andReturn($textResponse, $response);
+        ->times(3)
+        ->andReturn($textResponse, $response, $response);
 
     $path = $generator->generate($this->dummyImage, 'GameName', 'This is a very long description', $gameCoverPath);
 
@@ -387,8 +391,8 @@ it('handles gif and webp extensions and handles clickbait error', function () {
     $textResponse->shouldReceive('getStatusCode')->andReturn(500);
 
     $this->httpClient->shouldReceive('sendRequest')
-        ->twice()
-        ->andReturn($textResponse, $response);
+        ->times(3)
+        ->andReturn($textResponse, $response, $response);
 
     $path = $generator->generate($gifImage, 'GameName', 'This is a very long description', $webpCover);
 

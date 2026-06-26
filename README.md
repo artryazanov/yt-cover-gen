@@ -30,7 +30,7 @@ It leverages powerful AI vision and image editing capabilities (OpenAI Image Mod
 - **Laravel Integration**: Includes a Service Provider, Facade-friendly architecture, and configuration publishing.
 - **Configurable Models**: Supports various OpenAI models (`gpt-image-2`) and Gemini models (`gemini-3.1-flash-image`, `gemini-3-pro-image`, etc.).
 - **Smart Text Generation**: If the input title is short (<= 5 words), it is used directly to save API tokens and time. If it is longer, a text LLM condenses it into a short, punchy 2-5 word clickbait phrase. Then a vision model renders the final thumbnail.
-- **Game Logo Reference**: Optionally pass an official game cover to accurately reproduce the game's logo in the thumbnail (currently supported by Gemini).
+- **Smart Logo Extraction**: Optionally pass an official game cover to accurately reproduce the game's logo in the thumbnail. The generator uses AI to extract a "clean" logo from the cover and caches it to prevent unwanted cover art elements from bleeding into the final thumbnail (supported by Gemini).
 - **Smart Image Processing**: Handles image resizing, format conversion, and Base64 encoding/decoding automatically using GD (no external binaries required).
 - **Prompt Engineering**: Built-in, battle-tested prompt templates optimized for high CTR.
 
