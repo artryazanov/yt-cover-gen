@@ -249,7 +249,11 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
         $imageBase64 = $this->imageProcessor->imageToBase64($originalLogoPath);
         $mimeType = $this->imageProcessor->getMimeType($originalLogoPath);
 
-        $prompt = 'Extract ONLY the game logo from the provided image. Draw the exact same logo on a solid black background. Do not add any other elements, characters, or text.';
+        $prompt = "You are an expert graphic designer. Your task is to completely isolate and recreate ONLY the main game logo/typography from the provided image.\n";
+        $prompt .= "1. Draw ONLY the typography/logo. Make it large and perfectly centered.\n";
+        $prompt .= "2. Background MUST be solid black. NO gradients, NO scenes.\n";
+        $prompt .= "3. NO characters, NO faces, NO background scenery, NO secondary text.\n";
+        $prompt .= '4. Crop closely to the logo so there is no unnecessary excess background.';
 
         $parts = [
             [
@@ -271,6 +275,9 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
             ],
             'generationConfig' => [
                 'responseModalities' => ['IMAGE'],
+                'imageConfig' => [
+                    'aspectRatio' => '16:9',
+                ],
             ],
         ];
 
@@ -297,7 +304,7 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
                 $dir = dirname($cachePath);
                 $filename = basename($cachePath);
 
-                return $this->imageProcessor->processAndSave($imageData, $dir, $filename);
+                return $this->imageProcessor->saveRawImage($imageData, $dir, $filename);
             }
         }
 

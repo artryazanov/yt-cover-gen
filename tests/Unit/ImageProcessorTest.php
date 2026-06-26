@@ -40,6 +40,26 @@ it('can process and save an image', function () {
     expect($size[1])->toBe(56);
 });
 
+it('can save raw image without distortion', function () {
+    // Create a dummy 100x100 white image
+    $img = imagecreatetruecolor(100, 100);
+    imagefilledrectangle($img, 0, 0, 99, 99, imagecolorallocate($img, 255, 255, 255));
+    ob_start();
+    imagejpeg($img);
+    $data = ob_get_clean();
+    imagedestroy($img);
+
+    $path = $this->processor->saveRawImage($data, $this->tempDir, 'raw.jpg');
+
+    expect($path)->toBe($this->tempDir.'/raw.jpg');
+    expect(file_exists($path))->toBeTrue();
+
+    // Verify original aspect ratio is kept (100x100)
+    $size = getimagesize($path);
+    expect($size[0])->toBe(100);
+    expect($size[1])->toBe(100);
+});
+
 it('can convert image to base64', function () {
     $path = $this->tempDir.'/test_base64.txt';
     file_put_contents($path, 'hello world');

@@ -81,6 +81,44 @@ class ImageProcessor
     }
 
     /**
+     * Save the image data directly to disk without resizing or enforcing aspect ratios.
+     *
+     * @param  string  $imageData  Binary image data.
+     * @param  string  $outputPath  Directory to save the image to.
+     * @param  string|null  $filename  Optional filename.
+     * @return string Full path to the saved image.
+     */
+    public function saveRawImage(string $imageData, string $outputPath, ?string $filename = null): string
+    {
+        $src = @imagecreatefromstring($imageData);
+        if ($src === false) {
+            throw new RuntimeException('Failed to create image from provided data');
+        }
+
+        ob_start();
+        imagejpeg($src, null, 90);
+        $resultData = ob_get_clean();
+
+        imagedestroy($src);
+
+        if (! $filename) {
+            $filename = 'raw_'.time().'_'.uniqid().'.'.self::IMAGE_FORMAT;
+        }
+
+        if (! is_dir($outputPath)) {
+            mkdir($outputPath, 0755, true);
+        }
+
+        $fullPath = rtrim($outputPath, '/').'/'.$filename;
+
+        if (file_put_contents($fullPath, $resultData) === false) {
+            throw new RuntimeException("Failed to save image to {$fullPath}");
+        }
+
+        return $fullPath;
+    }
+
+    /**
      * Convert image to Base64.
      */
     public function imageToBase64(string $path): string
