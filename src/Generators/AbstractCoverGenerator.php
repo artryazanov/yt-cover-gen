@@ -57,14 +57,14 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
         while ($attempts < $maxAttempts) {
             $currentPrompt = $prompt;
             if ($remarks !== '') {
-                $currentPrompt .= "\n\nIMPORTANT: The previous generation had the following issues. Please FIX them:\n" . $remarks;
+                $currentPrompt .= "\n\nIMPORTANT: The previous generation had the following issues. Please FIX them:\n".$remarks;
             }
 
             $generatedImagePath = $this->doGenerate($imagePath, $currentPrompt, $gameCoverPath);
 
             $validationResult = $this->validateGeneratedCover($generatedImagePath, $gameName, $shortTitle);
 
-            if (!empty($validationResult['is_valid'])) {
+            if (! empty($validationResult['is_valid'])) {
                 return $generatedImagePath;
             }
 

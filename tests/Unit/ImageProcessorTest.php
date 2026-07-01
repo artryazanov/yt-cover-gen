@@ -89,7 +89,6 @@ it('throws exception when creating image from invalid data', function () {
     $this->processor->processAndSave('invalid_data', $this->tempDir, 'test.jpg');
 })->throws(RuntimeException::class, 'Failed to create image from provided data');
 
-
 it('throws exception when reading invalid image for base64', function () {
     $this->processor->imageToBase64($this->tempDir.'/does_not_exist.jpg');
 })->throws(RuntimeException::class);

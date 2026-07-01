@@ -285,7 +285,7 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
         $prompt .= "Check for spelling errors in the text, weird AI artifacts, or if the text is unreadable, corrupted, or duplicated.\n";
         $prompt .= "Respond in strictly valid JSON format with two keys:\n";
         $prompt .= "- \"is_valid\": boolean (true if the image is great and has no errors, false otherwise)\n";
-        $prompt .= "- \"remarks\": string (if is_valid is false, detail the exact issues to fix and what to avoid. If true, leave empty.)";
+        $prompt .= '- "remarks": string (if is_valid is false, detail the exact issues to fix and what to avoid. If true, leave empty.)';
 
         $payload = [
             'contents' => [
@@ -317,13 +317,13 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
 
         $json = json_decode($response->getBody()->getContents(), true);
         $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
-        
+
         $result = json_decode($text, true);
 
         if (json_last_error() === JSON_ERROR_NONE && isset($result['is_valid'])) {
             return [
-                'is_valid' => (bool)$result['is_valid'],
-                'remarks' => (string)($result['remarks'] ?? ''),
+                'is_valid' => (bool) $result['is_valid'],
+                'remarks' => (string) ($result['remarks'] ?? ''),
             ];
         }
 

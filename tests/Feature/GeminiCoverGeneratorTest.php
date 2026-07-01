@@ -1,5 +1,6 @@
 <?php
 
+use Artryazanov\YtCoverGen\Exceptions\GeminiResponseException;
 use Artryazanov\YtCoverGen\Generators\GeminiCoverGenerator;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
 use Psr\Http\Client\ClientInterface;
@@ -424,7 +425,11 @@ it('retries generation when validation fails', function () {
     $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
     $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
 
-    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $img = imagecreatetruecolor(10, 10);
+    ob_start();
+    imagejpeg($img);
+    $b64 = base64_encode(ob_get_clean());
+    imagedestroy($img);
     $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
     $responseBody = Mockery::mock(StreamInterface::class);
     $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
@@ -456,14 +461,18 @@ it('retries generation when validation fails', function () {
 
 it('handles missing game cover gracefully', function () {
     $generator = new GeminiCoverGenerator($this->imageProcessor, $this->tempDir, null, null, $this->httpClient, $this->requestFactory, $this->streamFactory, 'key');
-    
+
     $request = Mockery::mock(RequestInterface::class);
     $request->shouldReceive('withHeader')->andReturnSelf();
     $request->shouldReceive('withBody')->andReturnSelf();
     $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
     $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
 
-    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $img = imagecreatetruecolor(10, 10);
+    ob_start();
+    imagejpeg($img);
+    $b64 = base64_encode(ob_get_clean());
+    imagedestroy($img);
     $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
     $responseBody = Mockery::mock(StreamInterface::class);
     $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
@@ -472,21 +481,25 @@ it('handles missing game cover gracefully', function () {
     $response->shouldReceive('getBody')->andReturn($responseBody);
 
     $this->httpClient->shouldReceive('sendRequest')->andReturn($response, $this->validationResponse);
-    
+
     $path = $generator->generate($this->dummyImage, 'G', 'D', '/path/to/missing/cover.png');
     expect(file_exists($path))->toBeTrue();
 });
 
 it('uses cached game cover logo if it exists', function () {
     $generator = new GeminiCoverGenerator($this->imageProcessor, $this->tempDir, null, null, $this->httpClient, $this->requestFactory, $this->streamFactory, 'key');
-    
+
     $request = Mockery::mock(RequestInterface::class);
     $request->shouldReceive('withHeader')->andReturnSelf();
     $request->shouldReceive('withBody')->andReturnSelf();
     $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
     $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
 
-    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $img = imagecreatetruecolor(10, 10);
+    ob_start();
+    imagejpeg($img);
+    $b64 = base64_encode(ob_get_clean());
+    imagedestroy($img);
     $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
     $responseBody = Mockery::mock(StreamInterface::class);
     $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
@@ -495,9 +508,11 @@ it('uses cached game cover logo if it exists', function () {
     $response->shouldReceive('getBody')->andReturn($responseBody);
 
     $this->httpClient->shouldReceive('sendRequest')->andReturn($response, $response, $this->validationResponse, $response, $this->validationResponse);
-    
+
     $gameCoverPath = $this->tempDir.'/game_cover_cache.png';
-    $img2 = imagecreatetruecolor(20, 20); imagepng($img2, $gameCoverPath); imagedestroy($img2);
+    $img2 = imagecreatetruecolor(20, 20);
+    imagepng($img2, $gameCoverPath);
+    imagedestroy($img2);
 
     $path1 = $generator->generate($this->dummyImage, 'G', 'D', $gameCoverPath);
     $path2 = $generator->generate($this->dummyImage, 'G', 'D', $gameCoverPath);
@@ -512,7 +527,11 @@ it('returns generated image even if validation fails 3 times', function () {
     $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
     $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
 
-    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $img = imagecreatetruecolor(10, 10);
+    ob_start();
+    imagejpeg($img);
+    $b64 = base64_encode(ob_get_clean());
+    imagedestroy($img);
     $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
     $responseBody = Mockery::mock(StreamInterface::class);
     $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
@@ -551,7 +570,6 @@ it('throws exception on Gemini API error', function () {
     $response->shouldReceive('getBody')->andReturn($responseBody);
 
     $this->httpClient->shouldReceive('sendRequest')->once()->andReturn($response);
-    
-    $generator->generate($this->dummyImage, 'G', 'D');
-})->throws(\Artryazanov\YtCoverGen\Exceptions\GeminiResponseException::class, 'Gemini API Error: Internal Server Error');
 
+    $generator->generate($this->dummyImage, 'G', 'D');
+})->throws(GeminiResponseException::class, 'Gemini API Error: Internal Server Error');

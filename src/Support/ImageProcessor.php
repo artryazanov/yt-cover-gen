@@ -149,5 +149,4 @@ class ImageProcessor
             default => 'image/jpeg',
         };
     }
-
 }
