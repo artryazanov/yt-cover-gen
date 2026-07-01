@@ -4,15 +4,12 @@ namespace Artryazanov\YtCoverGen\Integrations\Laravel;
 
 use Artryazanov\YtCoverGen\Contracts\CoverGeneratorInterface;
 use Artryazanov\YtCoverGen\CoverGeneratorFactory;
-use Artryazanov\YtCoverGen\Generators\FallbackCoverGenerator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\HttpFactory;
 use Illuminate\Support\ServiceProvider;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
-use RuntimeException;
-use Throwable;
 
 class YtCoverGenServiceProvider extends ServiceProvider
 {
@@ -31,74 +28,23 @@ class YtCoverGenServiceProvider extends ServiceProvider
 
         $this->app->bind(CoverGeneratorInterface::class, function ($app) {
             $config = $app['config']['yt-cover-gen'];
-            $driver = $config['driver'] ?? 'openai';
             $outputPath = $config['output_path'] ?? storage_path('app/public/covers');
 
-            // Helper to create OpenAI Generator
-            $createOpenAi = function () use ($config, $outputPath) {
-                return CoverGeneratorFactory::createOpenAi(
-                    $config['drivers']['openai']['api_key'],
-                    $outputPath,
-                    $config['drivers']['openai']['model'] ?? null,
-                    $config['drivers']['openai']['text_model'] ?? null,
-                    $config['drivers']['openai']['size'] ?? null,
-                    $config['drivers']['openai']['quality'] ?? null
-                );
-            };
+            $httpClient = $app->bound(ClientInterface::class) ? $app->make(ClientInterface::class) : new Client;
+            $requestFactory = $app->bound(RequestFactoryInterface::class) ? $app->make(RequestFactoryInterface::class) : new HttpFactory;
+            $streamFactory = $app->bound(StreamFactoryInterface::class) ? $app->make(StreamFactoryInterface::class) : new HttpFactory;
 
-            // Helper to create Gemini Generator
-            $createGemini = function () use ($app, $config, $outputPath) {
-                $httpClient = $app->bound(ClientInterface::class) ? $app->make(ClientInterface::class) : new Client;
-                $requestFactory = $app->bound(RequestFactoryInterface::class) ? $app->make(RequestFactoryInterface::class) : new HttpFactory;
-                $streamFactory = $app->bound(StreamFactoryInterface::class) ? $app->make(StreamFactoryInterface::class) : new HttpFactory;
-
-                return CoverGeneratorFactory::createGemini(
-                    $config['drivers']['gemini']['api_key'],
-                    $httpClient,
-                    $requestFactory,
-                    $streamFactory,
-                    $outputPath,
-                    $config['drivers']['gemini']['model'] ?? null,
-                    $config['drivers']['gemini']['text_model'] ?? null,
-                    $config['drivers']['gemini']['aspect_ratio'] ?? null,
-                    $config['drivers']['gemini']['resolution'] ?? null
-                );
-            };
-
-            $errorHandler = function (Throwable $e) {
-                // Use global helper if available, or just log
-                if (function_exists('report')) {
-                    report($e);
-                }
-            };
-
-            if ($driver === 'openai') {
-                $primary = $createOpenAi();
-
-                // Check if Fallback (Gemini) is possible
-                if (! empty($config['drivers']['gemini']['api_key'])) {
-                    $secondary = $createGemini();
-
-                    return new FallbackCoverGenerator($primary, $secondary, $errorHandler);
-                }
-
-                return $primary;
-            }
-
-            if ($driver === 'gemini') {
-                $primary = $createGemini();
-
-                // Check if Fallback (OpenAI) is possible
-                if (! empty($config['drivers']['openai']['api_key'])) {
-                    $secondary = $createOpenAi();
-
-                    return new FallbackCoverGenerator($primary, $secondary, $errorHandler);
-                }
-
-                return $primary;
-            }
-
-            throw new RuntimeException("Unknown driver: $driver");
+            return CoverGeneratorFactory::createGemini(
+                $config['drivers']['gemini']['api_key'],
+                $httpClient,
+                $requestFactory,
+                $streamFactory,
+                $outputPath,
+                $config['drivers']['gemini']['model'] ?? null,
+                $config['drivers']['gemini']['text_model'] ?? null,
+                $config['drivers']['gemini']['aspect_ratio'] ?? null,
+                $config['drivers']['gemini']['resolution'] ?? null
+            );
         });
     }
 }

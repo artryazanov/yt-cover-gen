@@ -150,43 +150,4 @@ class ImageProcessor
         };
     }
 
-    /**
-     * Convert an image to PNG format, preserving or adding transparency.
-     * Use this for OpenAI DALL-E 2 edits which require PNG with transparency.
-     *
-     * @param  string  $path  Input image path
-     * @return string Path to the converted PNG file
-     */
-    public function convertToPng(string $path): string
-    {
-        $src = @imagecreatefromstring(file_get_contents($path));
-        if ($src === false) {
-            throw new RuntimeException("Failed to read image for conversion: $path");
-        }
-
-        $width = imagesx($src);
-        $height = imagesy($src);
-
-        // Create new truecolor image with alpha support
-        $dst = imagecreatetruecolor($width, $height);
-
-        // Disable blending to overwrite alpha info
-        imagealphablending($dst, false);
-        imagesavealpha($dst, true);
-
-        // Fill with transparent color
-        $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
-        imagefilledrectangle($dst, 0, 0, $width, $height, $transparent);
-
-        // Copy processed image contents
-        imagecopy($dst, $src, 0, 0, 0, 0, $width, $height);
-
-        $tempPath = sys_get_temp_dir().'/'.uniqid('img_conv_').'.png';
-        imagepng($dst, $tempPath);
-
-        imagedestroy($src);
-        imagedestroy($dst);
-
-        return $tempPath;
-    }
 }

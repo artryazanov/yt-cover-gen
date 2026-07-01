@@ -89,24 +89,6 @@ it('throws exception when creating image from invalid data', function () {
     $this->processor->processAndSave('invalid_data', $this->tempDir, 'test.jpg');
 })->throws(RuntimeException::class, 'Failed to create image from provided data');
 
-it('can convert image to png', function () {
-    $img = imagecreatetruecolor(50, 50);
-    $path = $this->tempDir.'/test_convert.jpg';
-    imagejpeg($img, $path);
-    imagedestroy($img);
-
-    $pngPath = $this->processor->convertToPng($path);
-
-    expect(file_exists($pngPath))->toBeTrue();
-    expect($this->processor->getMimeType($pngPath))->toBe('image/png');
-    unlink($pngPath);
-});
-
-it('throws exception when reading invalid image for conversion', function () {
-    $path = $this->tempDir.'/invalid.jpg';
-    file_put_contents($path, 'not an image');
-    $this->processor->convertToPng($path);
-})->throws(RuntimeException::class);
 
 it('throws exception when reading invalid image for base64', function () {
     $this->processor->imageToBase64($this->tempDir.'/does_not_exist.jpg');
