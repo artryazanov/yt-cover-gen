@@ -8,17 +8,18 @@ use Artryazanov\YtCoverGen\Enums\GeminiResolutionEnum;
 use Artryazanov\YtCoverGen\Enums\GeminiTextModelEnum;
 use Artryazanov\YtCoverGen\Exceptions\GeminiResponseException;
 use Artryazanov\YtCoverGen\Support\ImageProcessor;
+use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
 class GeminiCoverGenerator extends AbstractCoverGenerator
 {
     private const DEFAULT_MODEL = GeminiImageModelEnum::GEMINI_3_1_FLASH_IMAGE->value;
 
-    private $httpClient;
+    private mixed $httpClient;
 
-    private $requestFactory;
+    private mixed $requestFactory;
 
-    private $streamFactory;
+    private mixed $streamFactory;
 
     private ?string $apiKey;
 
@@ -61,16 +62,7 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
 
         $imageBase64 = $this->imageProcessor->imageToBase64($imagePath);
 
-        // Strict match of ExtendedGeminiClient logic
-        $mimeType = 'image/jpeg'; // Default
-        $extension = strtolower(pathinfo($imagePath, PATHINFO_EXTENSION));
-        if ($extension === 'png') {
-            $mimeType = 'image/png';
-        } elseif ($extension === 'gif') {
-            $mimeType = 'image/gif';
-        } elseif ($extension === 'webp') {
-            $mimeType = 'image/webp';
-        }
+        $mimeType = $this->imageProcessor->getMimeType($imagePath);
 
         $parts = [
             [
@@ -86,15 +78,7 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
 
         if ($gameCoverPath && file_exists($gameCoverPath)) {
             $coverBase64 = $this->imageProcessor->imageToBase64($gameCoverPath);
-            $coverMimeType = 'image/jpeg';
-            $coverExtension = strtolower(pathinfo($gameCoverPath, PATHINFO_EXTENSION));
-            if ($coverExtension === 'png') {
-                $coverMimeType = 'image/png';
-            } elseif ($coverExtension === 'gif') {
-                $coverMimeType = 'image/gif';
-            } elseif ($coverExtension === 'webp') {
-                $coverMimeType = 'image/webp';
-            }
+            $coverMimeType = $this->imageProcessor->getMimeType($gameCoverPath);
 
             $parts[] = [
                 'text' => 'Here is the official game cover image. Use the logo from this second image as an EXACT reference for drawing the game logo in the thumbnail:',
@@ -140,16 +124,8 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
             ],
         ];
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}";
-
-        $request = $this->requestFactory->createRequest('POST', $url)
-            ->withHeader('Content-Type', 'application/json');
         // ExtendedGeminiClient::editImage does NOT add x-goog-api-key header, it uses query param only.
-
-        $body = $this->streamFactory->createStream(json_encode($payload));
-        $request = $request->withBody($body);
-
-        $response = $this->httpClient->sendRequest($request);
+        $response = $this->sendGeminiRequest($this->model, $payload);
 
         if ($response->getStatusCode() !== 200) {
             throw new GeminiResponseException('Gemini API Error: '.$response->getBody()->getContents());
@@ -186,19 +162,11 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
             ],
         ];
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->textModel}:generateContent?key={$this->apiKey}";
-
         if (! $this->httpClient || ! $this->apiKey) {
             return $videoDescription;
         }
 
-        $request = $this->requestFactory->createRequest('POST', $url)
-            ->withHeader('Content-Type', 'application/json');
-
-        $body = $this->streamFactory->createStream(json_encode($payload));
-        $request = $request->withBody($body);
-
-        $response = $this->httpClient->sendRequest($request);
+        $response = $this->sendGeminiRequest($this->textModel, $payload);
 
         if ($response->getStatusCode() !== 200) {
             return $videoDescription;
@@ -281,15 +249,7 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
             ],
         ];
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}";
-
-        $request = $this->requestFactory->createRequest('POST', $url)
-            ->withHeader('Content-Type', 'application/json');
-
-        $body = $this->streamFactory->createStream(json_encode($payload));
-        $request = $request->withBody($body);
-
-        $response = $this->httpClient->sendRequest($request);
+        $response = $this->sendGeminiRequest($this->model, $payload);
 
         if ($response->getStatusCode() !== 200) {
             throw new GeminiResponseException('Gemini API Error (Logo Extraction): '.$response->getBody()->getContents());
@@ -309,5 +269,81 @@ class GeminiCoverGenerator extends AbstractCoverGenerator
         }
 
         throw new GeminiResponseException('No image found in Gemini Beta response during logo extraction. Response: '.json_encode($json));
+    }
+
+    protected function validateGeneratedCover(string $generatedImagePath, string $gameName, string $shortTitle): array
+    {
+        if (! $this->httpClient || ! $this->apiKey) {
+            return ['is_valid' => true, 'remarks' => ''];
+        }
+
+        $imageBase64 = $this->imageProcessor->imageToBase64($generatedImagePath);
+        $mimeType = $this->imageProcessor->getMimeType($generatedImagePath);
+
+        $prompt = "You are an expert YouTube thumbnail validator. Evaluate the provided generated thumbnail image.\n";
+        $prompt .= "It should be a thumbnail for the game \"$gameName\" and MUST contain EXACTLY the text \"$shortTitle\".\n";
+        $prompt .= "Check for spelling errors in the text, weird AI artifacts, or if the text is unreadable, corrupted, or duplicated.\n";
+        $prompt .= "Respond in strictly valid JSON format with two keys:\n";
+        $prompt .= "- \"is_valid\": boolean (true if the image is great and has no errors, false otherwise)\n";
+        $prompt .= "- \"remarks\": string (if is_valid is false, detail the exact issues to fix and what to avoid. If true, leave empty.)";
+
+        $payload = [
+            'contents' => [
+                [
+                    'parts' => [
+                        [
+                            'text' => $prompt,
+                        ],
+                        [
+                            'inline_data' => [
+                                'mime_type' => $mimeType,
+                                'data' => $imageBase64,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature' => 0.2,
+                'responseMimeType' => 'application/json',
+            ],
+        ];
+
+        $response = $this->sendGeminiRequest($this->textModel, $payload);
+
+        if ($response->getStatusCode() !== 200) {
+            return ['is_valid' => true, 'remarks' => ''];
+        }
+
+        $json = json_decode($response->getBody()->getContents(), true);
+        $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        
+        $result = json_decode($text, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && isset($result['is_valid'])) {
+            return [
+                'is_valid' => (bool)$result['is_valid'],
+                'remarks' => (string)($result['remarks'] ?? ''),
+            ];
+        }
+
+        return ['is_valid' => true, 'remarks' => ''];
+    }
+
+    private function sendGeminiRequest(string $modelName, array $payload): ResponseInterface
+    {
+        if (! $this->httpClient || ! $this->apiKey) {
+            throw new RuntimeException('PSR Client and API Key required for Gemini models.');
+        }
+
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$modelName}:generateContent?key={$this->apiKey}";
+
+        $request = $this->requestFactory->createRequest('POST', $url)
+            ->withHeader('Content-Type', 'application/json');
+
+        $body = $this->streamFactory->createStream(json_encode($payload));
+        $request = $request->withBody($body);
+
+        return $this->httpClient->sendRequest($request);
     }
 }

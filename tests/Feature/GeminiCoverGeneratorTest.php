@@ -22,6 +22,23 @@ beforeEach(function () {
     $img = imagecreatetruecolor(50, 50);
     imagejpeg($img, $this->dummyImage);
     imagedestroy($img);
+
+    $validationJsonResponse = json_encode([
+        'candidates' => [
+            [
+                'content' => [
+                    'parts' => [
+                        ['text' => '{"is_valid": true, "remarks": ""}'],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+    $validationResponseBody = Mockery::mock(StreamInterface::class);
+    $validationResponseBody->shouldReceive('getContents')->andReturn($validationJsonResponse);
+    $this->validationResponse = Mockery::mock(ResponseInterface::class);
+    $this->validationResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $this->validationResponse->shouldReceive('getBody')->andReturn($validationResponseBody);
 });
 
 afterEach(function () {
@@ -129,8 +146,8 @@ it('generates cover using Gemini Beta API', function () {
     $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
 
     $this->httpClient->shouldReceive('sendRequest')
-        ->twice()
-        ->andReturn($textResponse, $response);
+        ->times(3)
+        ->andReturn($textResponse, $response, $this->validationResponse);
 
     $path = $generator->generate($this->dummyImage, 'GameName', 'This is a very long description');
 
@@ -214,8 +231,8 @@ it('generates cover using Gemini Beta API and includes 360 badge prompt when req
     $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
 
     $this->httpClient->shouldReceive('sendRequest')
-        ->twice()
-        ->andReturn($textResponse, $response);
+        ->times(3)
+        ->andReturn($textResponse, $response, $this->validationResponse);
 
     $path = $generator->generate($this->dummyImage, 'GameName', 'Awesome 360 video with a lot of words');
 
@@ -318,8 +335,8 @@ it('generates cover using Gemini Beta API with game cover reference', function (
     $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
 
     $this->httpClient->shouldReceive('sendRequest')
-        ->times(3)
-        ->andReturn($textResponse, $response, $response);
+        ->times(4)
+        ->andReturn($textResponse, $response, $response, $this->validationResponse);
 
     $path = $generator->generate($this->dummyImage, 'GameName', 'This is a very long description', $gameCoverPath);
 
@@ -391,10 +408,150 @@ it('handles gif and webp extensions and handles clickbait error', function () {
     $textResponse->shouldReceive('getStatusCode')->andReturn(500);
 
     $this->httpClient->shouldReceive('sendRequest')
-        ->times(3)
-        ->andReturn($textResponse, $response, $response);
+        ->times(4)
+        ->andReturn($textResponse, $response, $response, $this->validationResponse);
 
     $path = $generator->generate($gifImage, 'GameName', 'This is a very long description', $webpCover);
 
     expect(file_exists($path))->toBeTrue();
 });
+
+it('retries generation when validation fails', function () {
+    $generator = new GeminiCoverGenerator($this->imageProcessor, $this->tempDir, null, null, $this->httpClient, $this->requestFactory, $this->streamFactory, 'test-api-key');
+    $request = Mockery::mock(RequestInterface::class);
+    $request->shouldReceive('withHeader')->andReturnSelf();
+    $request->shouldReceive('withBody')->andReturnSelf();
+    $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
+    $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
+
+    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
+    $responseBody = Mockery::mock(StreamInterface::class);
+    $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->shouldReceive('getStatusCode')->andReturn(200);
+    $response->shouldReceive('getBody')->andReturn($responseBody);
+
+    $textJsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['text' => 'Long title']]]]]]);
+    $textResponseBody = Mockery::mock(StreamInterface::class);
+    $textResponseBody->shouldReceive('getContents')->andReturn($textJsonResponse);
+    $textResponse = Mockery::mock(ResponseInterface::class);
+    $textResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $textResponse->shouldReceive('getBody')->andReturn($textResponseBody);
+
+    $valFailJson = json_encode(['candidates' => [['content' => ['parts' => [['text' => '{"is_valid": false, "remarks": "Fix it"}']]]]]]);
+    $valFailBody = Mockery::mock(StreamInterface::class);
+    $valFailBody->shouldReceive('getContents')->andReturn($valFailJson);
+    $valFail = Mockery::mock(ResponseInterface::class);
+    $valFail->shouldReceive('getStatusCode')->andReturn(200);
+    $valFail->shouldReceive('getBody')->andReturn($valFailBody);
+
+    $this->httpClient->shouldReceive('sendRequest')
+        ->times(5)
+        ->andReturn($textResponse, $response, $valFail, $response, $this->validationResponse);
+
+    $path = $generator->generate($this->dummyImage, 'GameName', 'This is a very long description that triggers title generation');
+    expect(file_exists($path))->toBeTrue();
+});
+
+it('handles missing game cover gracefully', function () {
+    $generator = new GeminiCoverGenerator($this->imageProcessor, $this->tempDir, null, null, $this->httpClient, $this->requestFactory, $this->streamFactory, 'key');
+    
+    $request = Mockery::mock(RequestInterface::class);
+    $request->shouldReceive('withHeader')->andReturnSelf();
+    $request->shouldReceive('withBody')->andReturnSelf();
+    $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
+    $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
+
+    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
+    $responseBody = Mockery::mock(StreamInterface::class);
+    $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->shouldReceive('getStatusCode')->andReturn(200);
+    $response->shouldReceive('getBody')->andReturn($responseBody);
+
+    $this->httpClient->shouldReceive('sendRequest')->andReturn($response, $this->validationResponse);
+    
+    $path = $generator->generate($this->dummyImage, 'G', 'D', '/path/to/missing/cover.png');
+    expect(file_exists($path))->toBeTrue();
+});
+
+it('uses cached game cover logo if it exists', function () {
+    $generator = new GeminiCoverGenerator($this->imageProcessor, $this->tempDir, null, null, $this->httpClient, $this->requestFactory, $this->streamFactory, 'key');
+    
+    $request = Mockery::mock(RequestInterface::class);
+    $request->shouldReceive('withHeader')->andReturnSelf();
+    $request->shouldReceive('withBody')->andReturnSelf();
+    $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
+    $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
+
+    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
+    $responseBody = Mockery::mock(StreamInterface::class);
+    $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->shouldReceive('getStatusCode')->andReturn(200);
+    $response->shouldReceive('getBody')->andReturn($responseBody);
+
+    $this->httpClient->shouldReceive('sendRequest')->andReturn($response, $response, $this->validationResponse, $response, $this->validationResponse);
+    
+    $gameCoverPath = $this->tempDir.'/game_cover_cache.png';
+    $img2 = imagecreatetruecolor(20, 20); imagepng($img2, $gameCoverPath); imagedestroy($img2);
+
+    $path1 = $generator->generate($this->dummyImage, 'G', 'D', $gameCoverPath);
+    $path2 = $generator->generate($this->dummyImage, 'G', 'D', $gameCoverPath);
+    expect(file_exists($path1))->toBeTrue();
+});
+
+it('returns generated image even if validation fails 3 times', function () {
+    $generator = new GeminiCoverGenerator($this->imageProcessor, $this->tempDir, null, null, $this->httpClient, $this->requestFactory, $this->streamFactory, 'key');
+    $request = Mockery::mock(RequestInterface::class);
+    $request->shouldReceive('withHeader')->andReturnSelf();
+    $request->shouldReceive('withBody')->andReturnSelf();
+    $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
+    $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
+
+    $img = imagecreatetruecolor(10, 10); ob_start(); imagejpeg($img); $b64 = base64_encode(ob_get_clean()); imagedestroy($img);
+    $jsonResponse = json_encode(['candidates' => [['content' => ['parts' => [['inlineData' => ['mime_type' => 'image/jpeg', 'data' => $b64]]]]]]]);
+    $responseBody = Mockery::mock(StreamInterface::class);
+    $responseBody->shouldReceive('getContents')->andReturn($jsonResponse);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->shouldReceive('getStatusCode')->andReturn(200);
+    $response->shouldReceive('getBody')->andReturn($responseBody);
+
+    $valFailJson = json_encode(['candidates' => [['content' => ['parts' => [['text' => '{"is_valid": false, "remarks": "Fix it"}']]]]]]);
+    $valFailBody = Mockery::mock(StreamInterface::class);
+    $valFailBody->shouldReceive('getContents')->andReturn($valFailJson);
+    $valFail = Mockery::mock(ResponseInterface::class);
+    $valFail->shouldReceive('getStatusCode')->andReturn(200);
+    $valFail->shouldReceive('getBody')->andReturn($valFailBody);
+
+    // 3 iterations = 3 validation failures
+    $this->httpClient->shouldReceive('sendRequest')
+        ->times(6) // generate + validate = 2 calls per iteration * 3 iterations
+        ->andReturn($response, $valFail, $response, $valFail, $response, $valFail);
+
+    $path = $generator->generate($this->dummyImage, 'G', 'D');
+    expect(file_exists($path))->toBeTrue();
+});
+
+it('throws exception on Gemini API error', function () {
+    $generator = new GeminiCoverGenerator($this->imageProcessor, $this->tempDir, null, null, $this->httpClient, $this->requestFactory, $this->streamFactory, 'key');
+    $request = Mockery::mock(RequestInterface::class);
+    $request->shouldReceive('withHeader')->andReturnSelf();
+    $request->shouldReceive('withBody')->andReturnSelf();
+    $this->requestFactory->shouldReceive('createRequest')->andReturn($request);
+    $this->streamFactory->shouldReceive('createStream')->andReturn(Mockery::mock(StreamInterface::class));
+
+    $responseBody = Mockery::mock(StreamInterface::class);
+    $responseBody->shouldReceive('getContents')->andReturn('Internal Server Error');
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->shouldReceive('getStatusCode')->andReturn(500);
+    $response->shouldReceive('getBody')->andReturn($responseBody);
+
+    $this->httpClient->shouldReceive('sendRequest')->once()->andReturn($response);
+    
+    $generator->generate($this->dummyImage, 'G', 'D');
+})->throws(\Artryazanov\YtCoverGen\Exceptions\GeminiResponseException::class, 'Gemini API Error: Internal Server Error');
+

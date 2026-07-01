@@ -49,7 +49,30 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
 
         $prompt = $this->buildPrompt($gameName, $shortTitle, $videoDescription, $gameCoverPath);
 
-        return $this->doGenerate($imagePath, $prompt, $gameCoverPath);
+        $remarks = '';
+        $attempts = 0;
+        $maxAttempts = 3;
+        $generatedImagePath = '';
+
+        while ($attempts < $maxAttempts) {
+            $currentPrompt = $prompt;
+            if ($remarks !== '') {
+                $currentPrompt .= "\n\nIMPORTANT: The previous generation had the following issues. Please FIX them:\n" . $remarks;
+            }
+
+            $generatedImagePath = $this->doGenerate($imagePath, $currentPrompt, $gameCoverPath);
+
+            $validationResult = $this->validateGeneratedCover($generatedImagePath, $gameName, $shortTitle);
+
+            if (!empty($validationResult['is_valid'])) {
+                return $generatedImagePath;
+            }
+
+            $remarks = $validationResult['remarks'] ?? '';
+            $attempts++;
+        }
+
+        return $generatedImagePath;
     }
 
     abstract protected function generateShortTitle(string $gameName, string $videoDescription): string;
@@ -57,6 +80,8 @@ abstract class AbstractCoverGenerator implements CoverGeneratorInterface
     abstract protected function buildPrompt(string $gameName, string $generatedTitle, string $originalDescription, ?string $gameCoverPath = null): string;
 
     abstract protected function doGenerate(string $imagePath, string $prompt, ?string $gameCoverPath = null): string;
+
+    abstract protected function validateGeneratedCover(string $generatedImagePath, string $gameName, string $shortTitle): array;
 
     protected function getShortTitleSystemPrompt(string $gameName, string $videoDescription): string
     {

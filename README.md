@@ -25,6 +25,7 @@ It leverages powerful AI vision and image editing capabilities (Google Gemini) t
 - **Configurable Models**: Supports various Gemini models (`gemini-3.1-flash-image`, `gemini-3-pro-image`, etc.).
 - **Smart Text Generation**: If the input title is short (<= 5 words), it is used directly to save API tokens and time. If it is longer, a text LLM condenses it into a short, punchy 2-5 word clickbait phrase. Then a vision model renders the final thumbnail.
 - **Smart Logo Extraction**: Optionally pass an official game cover to accurately reproduce the game's logo in the thumbnail. The generator uses AI to extract a "clean" logo from the cover and caches it to prevent unwanted cover art elements from bleeding into the final thumbnail (supported by Gemini).
+- **Self-Correcting Validation Loop**: Automatically evaluates the generated thumbnail using a vision-language model to check for AI artifacts, spelling errors, and readability. If the thumbnail fails validation, it regenerates up to 3 times with specific correction instructions.
 - **Smart Image Processing**: Handles image resizing, format conversion, and Base64 encoding/decoding automatically using GD (no external binaries required).
 - **Prompt Engineering**: Built-in, battle-tested prompt templates optimized for high CTR.
 
